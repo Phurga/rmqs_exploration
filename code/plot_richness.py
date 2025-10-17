@@ -2,6 +2,7 @@ import warnings
 from pathlib import Path
 import matplotlib as mpl
 import pandas as pd
+from src.GLOBALS import DEFAULT_META, DEFAULT_OTU_RICH, OUT_DIR
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
@@ -9,11 +10,6 @@ import seaborn as sns
 
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)
-
-DEFAULT_OTU_RICH = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\results\otu_richness.csv")
-DEFAULT_META = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\data\RMQS1_occupation_nommatp_nomsol_23_03_2022.csv")
-OUT_DIR = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\results")
-OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 CAT_MAP = {
     "friches": "wastelands",                                    

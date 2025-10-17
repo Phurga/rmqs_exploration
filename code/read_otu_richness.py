@@ -2,13 +2,10 @@ import warnings
 from pathlib import Path
 import pandas as pd
 
+from src.GLOBALS import DEFAULT_OTU, OUT_DIR
+
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)
-
-DEFAULT_OTU = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\data\rmqs1_16S_otu_abundance.tsv.gz")
-OUT_DIR = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\results")
-OUT_DIR.mkdir(parents=True, exist_ok=True)
-
 
 def read_and_write_richness(otu_path: Path = DEFAULT_OTU, out_dir: Path = OUT_DIR):
     otu_df = pd.read_csv(
