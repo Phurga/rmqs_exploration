@@ -2,7 +2,7 @@ import warnings
 from pathlib import Path
 import matplotlib as mpl
 import pandas as pd
-from src.GLOBALS import DEFAULT_META, DEFAULT_OTU_RICH, OUT_DIR
+from code.GLOBALS import DEFAULT_META, DEFAULT_OTU_RICH, OUT_DIR
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
