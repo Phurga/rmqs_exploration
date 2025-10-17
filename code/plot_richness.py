@@ -15,6 +15,18 @@ DEFAULT_META = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\dat
 OUT_DIR = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\results")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
+CAT_MAP = {
+    "friches": "wastelands",                                    
+    "milieux naturels particuliers": "natural sites",              
+    "parcs et jardins": "urban green spaces",                         
+    "successions culturales": "annual crops",                     
+    "surfaces boisees": "woods",                          
+    "surfaces toujours en herbe": "meadows",               
+    "forets caducifoliees": "broadleaves",
+    "forets de coniferes": "coniferous",
+    "vignes vergers et cultures perennes arbustives": "permanent crops"
+}
+
 
 def build_land_use_from_desc(meta: pd.DataFrame):
     """
@@ -34,6 +46,7 @@ def build_land_use_from_desc(meta: pd.DataFrame):
         return row['desc_code_occupation1']
     
     meta['land_use'] = meta.apply(make_custom, axis=1)
+    meta['land_use'] = meta['land_use'].map(CAT_MAP)
     return meta
 
 def load_inputs(otu_path: Path, meta_path: Path):
@@ -53,6 +66,11 @@ def load_inputs(otu_path: Path, meta_path: Path):
     meta_df = build_land_use_from_desc(meta_df)
     return otu_counts, meta_df
 
+def emoji_for(cat: str) -> str:
+    if pd.isna(cat):
+        return ""
+    key = str(cat).strip().lower()
+    return CAT_MAP.get(key, "")
 
 def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, group_col: str, alias: str, out_path: Path):
     # If requested group column doesn't exist, try to create land_use from desc fields
@@ -115,8 +133,14 @@ def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, group_col: st
     ax.set_yticklabels(y_labels)
     ax.set_xlabel("OTU richness")
     ax.set_ylabel("")
-    ax.set_title(f"Distribution of OTU richness by {alias} (violins + jitter) — medians shown")
+    ax.set_title(f"Distribution and median of OTU richness by {alias}")
     ax.xaxis.set_major_formatter(FuncFormatter(fmt))
+    
+    # create colorbar — adjust fraction to control thickness
+    sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+    sm.set_array(counts.values)
+    cbar = fig.colorbar(sm, ax=ax, pad=0.02, fraction=0.03)
+    cbar.set_label("samples count", rotation=270, labelpad=12)
 
     plt.tight_layout()
     fig.savefig(out_path, dpi=300)
@@ -130,4 +154,4 @@ def main(group_col, alias):
 
 
 if __name__ == "__main__":
-    main('signific_ger_95', 'soil type')
+    main('land_use', 'land use')
