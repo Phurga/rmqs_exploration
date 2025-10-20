@@ -2,7 +2,7 @@ import warnings
 from pathlib import Path
 import pandas as pd
 
-from code.GLOBALS import DEFAULT_OTU, OUT_DIR
+from GLOBALS import DEFAULT_OTU, OUT_DIR
 
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)

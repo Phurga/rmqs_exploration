@@ -7,3 +7,5 @@ DEFAULT_META = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\dat
 OUT_DIR = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\results")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_OTU = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\data\rmqs1_16S_otu_abundance.tsv.gz")
+WORLD_PATH = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\data\world.geojson")
+SOIL_PATH = Path(r"c:\Users\aburg\Documents\calculations\rmqs_exploration\data\soil_data.csv")

@@ -2,24 +2,30 @@ import warnings
 from pathlib import Path
 import matplotlib as mpl
 import pandas as pd
-from code.GLOBALS import DEFAULT_META, DEFAULT_OTU_RICH, OUT_DIR
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
+from GLOBALS import DEFAULT_META, DEFAULT_OTU_RICH, OUT_DIR, SOIL_PATH
+
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+DIMENSION = ("signific_ger_95", 'soil type')
+DIMENSION = ("wrb_guess", 'WRB class')
+DIMENSION = ("parent_material", 'parent material')
+DIMENSION = ("desc_code_occupation3", 'land use (fine)')
+DIMENSION = ("land_use", 'land use')
+
 CAT_MAP = {
-    "friches": "wastelands",                                    
+    "friches": "urban sites",                                    
     "milieux naturels particuliers": "natural sites",              
-    "parcs et jardins": "urban green spaces",                         
+    "parcs et jardins": "urban sites",                         
     "successions culturales": "annual crops",                     
     "surfaces boisees": "woods",                          
     "surfaces toujours en herbe": "meadows",               
-    "forets caducifoliees": "broadleaves",
-    "forets de coniferes": "coniferous",
+    "forets caducifoliees": "broadleaves forests",
+    "forets de coniferes": "coniferous forests",
     "vignes vergers et cultures perennes arbustives": "permanent crops"
 }
 
@@ -45,32 +51,27 @@ def build_land_use_from_desc(meta: pd.DataFrame):
     meta['land_use'] = meta['land_use'].map(CAT_MAP)
     return meta
 
-def load_inputs(otu_path: Path, meta_path: Path):
-    # load richness (parquet preferred)
-    if otu_path.exists() and otu_path.suffix in (".parquet",):
-        otu_counts = pd.read_parquet(otu_path)
-    elif otu_path.exists():
-        # parquet not available: try CSV
-        otu_counts = pd.read_csv(otu_path, sep=";", index_col="id_site", encoding="windows-1252")
-    else:
-        raise FileNotFoundError(f"OTU richness file not found: {otu_path}")
+def add_soil_data(metadata_df: pd.DataFrame):
+    mapping = pd.read_csv(SOIL_PATH)
+    merge = metadata_df.merge(mapping, left_on='signific_ger_95', right_on="name", how="left")
+    merge.set_index(metadata_df.index, inplace=True)
+    return merge
 
-    otu_counts.index = otu_counts.index.astype(str).str.strip()
+def load_inputs(otu_path: Path, meta_path: Path, dimension):
+    otu_counts = pd.read_csv(otu_path, sep=";", index_col="id_site", encoding="windows-1252")
+    otu_counts.index = otu_counts.index.astype(str)
 
     meta_df = pd.read_csv(meta_path, index_col="id_site", encoding="windows-1252")
-    meta_df.index = meta_df.index.astype(str).str.strip()
-    meta_df = build_land_use_from_desc(meta_df)
-    return otu_counts, meta_df
+    meta_df.index = meta_df.index.astype(str)
 
-def emoji_for(cat: str) -> str:
-    if pd.isna(cat):
-        return ""
-    key = str(cat).strip().lower()
-    return CAT_MAP.get(key, "")
+    meta_df = build_land_use_from_desc(meta_df)
+    meta_df = add_soil_data(meta_df)
+    metadata_df = metadata_df[['x_theo', 'y_theo', dimension]]
+    return otu_counts, meta_df
 
 def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, group_col: str, alias: str, out_path: Path):
     # If requested group column doesn't exist, try to create land_use from desc fields
-    result_df = otu_counts.join(meta_df[group_col], how='inner')
+    result_df = otu_counts.join(meta_df[[group_col]], how='left')
 
     # order categories by median (descending)
     medians = result_df.groupby(group_col)["otu_richness"].median().sort_values(ascending=False)
@@ -143,11 +144,12 @@ def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, group_col: st
     print(f"Saved figure to: {out_path}")
 
 
-def main(group_col, alias):
+def main():
+    group_col = DIMENSION[0]
+    alias = DIMENSION[1]
     out_path = (OUT_DIR / f"otu_richness_by_{alias}.png")
-    otu_counts, meta_df = load_inputs(DEFAULT_OTU_RICH, DEFAULT_META)
+    otu_counts, meta_df = load_inputs(DEFAULT_OTU_RICH, DEFAULT_META, DIMENSION[0])
     plot_richness(otu_counts, meta_df, group_col, alias, out_path)
 
-
 if __name__ == "__main__":
-    main('land_use', 'land use')
+    main()
