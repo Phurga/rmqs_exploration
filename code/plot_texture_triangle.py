@@ -1,7 +1,7 @@
 import plotly.express as px
+import pandas as pd
 
 from utilities import load_data
-import pandas as pd
 
 def data_preparation(metadata_df):
     # Columns to process

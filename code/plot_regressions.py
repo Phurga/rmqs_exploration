@@ -2,7 +2,7 @@ import pandas as pd
 import statsmodels.formula.api as sm
 import matplotlib.pyplot as plt
 
-from utilities import load_data
+from utilities import load_data, save_fig
 
 # Load the metadata
 metadata_df = load_data()
@@ -13,7 +13,6 @@ dependent_variable = 'otu_richness'
 # Get the list of independent variables from the metadata
 independent_variables = metadata_df.columns.tolist()
 independent_variables.remove(dependent_variable)
-independent_variables.remove('sample_id')  # Assuming 'sample_id' is also a column
 
 # Construct the regression formula
 formula = f"{dependent_variable} ~ " + " + ".join(independent_variables)
@@ -37,5 +36,4 @@ plt.plot([min(metadata_df[dependent_variable]), max(metadata_df[dependent_variab
          [min(metadata_df[dependent_variable]), max(metadata_df[dependent_variable])],
          color='red', linestyle='--')
 
-plt.savefig('regression_plot.png')
-plt.show()
+save_fig(plt.gcf(), "regression", "otu_richness_regression")
