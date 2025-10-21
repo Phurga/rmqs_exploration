@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from GLOBALS import SOIL_PATH, DEFAULT_META, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_PATH
+from GLOBALS import SOIL_METADATA_PATH, DEFAULT_META, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_PATH, SOIL_PROPERTIES_PATH
 
 
 def build_land_use_from_desc(meta: pd.DataFrame):
@@ -25,60 +25,43 @@ def build_land_use_from_desc(meta: pd.DataFrame):
     meta["land_use"] = meta["land_use"].map(LAND_USE_SIMPLE_MAPPING)
     return meta
 
-def add_soil_data(metadata_df: pd.DataFrame):
-    mapping = pd.read_csv(SOIL_PATH)
+def add_soil_metadata(metadata_df: pd.DataFrame):
+    mapping = pd.read_csv(SOIL_METADATA_PATH)
     merge = metadata_df.merge(
         mapping, left_on="signific_ger_95", right_on="name", how="left"
     )
     merge.set_index(metadata_df.index, inplace=True)
     return merge
 
+def add_soil_properties(metadata_df: pd.DataFrame) -> pd.DataFrame:
+    soil_props = pd.read_csv(SOIL_PROPERTIES_PATH, index_col="id_site", encoding="windows-1252")
+    soil_props.index = soil_props.index.astype(str)
+    metadata_df = metadata_df.merge(soil_props, left_index=True, right_index=True, how="left")
+    return metadata_df
 
-def load_data(
-    otu_path: Path = DEFAULT_OTU_RICH,
-    meta_path: Path = DEFAULT_META,
-    top_n: int = None,
-    top_column: str = None,
-    filter_columns: list = None,
-):
-    """
-    Loads OTU counts and metadata, merges them, and applies optional filtering and relabeling.
-
-    Args:
-        otu_path (Path, optional): Path to OTU counts CSV. Defaults to DEFAULT_OTU_RICH.
-        meta_path (Path, optional): Path to metadata CSV. Defaults to DEFAULT_META.
-        top_n (int, optional): Number of top values to keep in the specified column. Defaults to None.
-        column (str, optional): Column to relabel based on top N values. Defaults to None.
-        filter_columns (list, optional): List of columns to keep in the metadata. Defaults to None.
-
-    Returns:
-        tuple: OTU counts and processed metadata DataFrames.
-    """
-    otu_counts = pd.read_csv(
-        otu_path, sep=";", index_col="id_site", encoding="windows-1252"
-    )
+def load_data(otu_path: Path = DEFAULT_OTU_RICH, meta_path: Path = DEFAULT_META, filter_columns: list = None):
+    otu_counts = pd.read_csv(otu_path, sep=";", index_col="id_site", encoding="windows-1252")
     otu_counts.index = otu_counts.index.astype(str)
 
     meta_df = pd.read_csv(meta_path, index_col="id_site", encoding="windows-1252").dropna()
     meta_df.index = meta_df.index.astype(str)
 
     meta_df = build_land_use_from_desc(meta_df)
-    meta_df = add_soil_data(meta_df)
+    meta_df = add_soil_metadata(meta_df)
     meta_df = add_bioregion(meta_df)
+    meta_df = add_soil_properties(meta_df)
+    meta_df = meta_df.merge(otu_counts, how="inner", left_index=True, right_index=True)
 
     if filter_columns:
         meta_df = meta_df[filter_columns]
 
-    if top_column:
-        meta_df[top_column] = relabel_top_n(meta_df[top_column], top_n)
-
-    return otu_counts, meta_df
+    return meta_df
 
 
-def relabel_top_n(series: pd.Series, n: int) -> pd.Series:
+def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
     """Relabel values in a column to 'others' if they are not in the top N."""
-    if n is not None and series.nunique() > n:
-        top_values = series.value_counts().nlargest(n).index
+    if top_n is not None and series.nunique() > top_n:
+        top_values = series.value_counts().nlargest(top_n).index
         return series.where(series.isin(top_values), 'others')
     return series
 

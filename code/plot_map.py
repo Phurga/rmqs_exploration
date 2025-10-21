@@ -3,7 +3,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
 
-from utilities import load_data, save_fig
+from utilities import load_data, save_fig, relabel_top_n
 from GLOBALS import WORLD_PATH, LAND_USE_COLOR_MAPPING
 
 def gdf_definition(metadata_df: pd.DataFrame):
@@ -56,13 +56,16 @@ def plot_sample_sites(gdf: gpd.GeoDataFrame, group_col: str, alias: str):
     save_fig(fig, "map", f"france_{alias}")
     return None
 
-def main(group_col, alias):
-    _,metadata_df = load_data(top_n=9, top_column=group_col)
+def plot_map(metadata_df, group_col, alias, top_n = 9):
+    if top_n is not None:
+        metadata_df[group_col] = relabel_top_n(metadata_df[group_col], top_n)
     gdf_pts = gdf_definition(metadata_df)
     plot_sample_sites(gdf_pts, group_col, alias)
 
 if __name__ == "__main__":
-    main("wrb_guess", 'soil_class')
+    [group_col, alias] = ("wrb_guess", 'soil_class')
+    metadata_df = load_data()
+    plot_map(metadata_df, group_col, alias)
 
 DIMENSIONS = [
     ("signific_ger_95", 'soil_type'),

@@ -1,37 +1,36 @@
 import warnings
-from pathlib import Path
 import matplotlib as mpl
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
-from utilities import load_data, save_fig
+from utilities import load_data, save_fig, relabel_top_n
 
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, value_col: str, group_col: str, alias: str):
-    result_df = otu_counts.join(meta_df[[group_col]], how='left')
+def prepare_data(meta_df: pd.DataFrame, group_col: str, value_col: str):
+    """Prepares the data for plotting."""
+    meta_df[group_col] = relabel_top_n(meta_df[group_col], top_n=15)
 
     # order categories by median (descending)
-    medians = result_df.groupby(group_col)[value_col].median().sort_values(ascending=False)
+    medians = meta_df.groupby(group_col)[value_col].median().sort_values(ascending=False)
     order = medians.index.tolist()
 
     # counts per category for labels
-    counts = result_df.groupby(group_col).size().reindex(order).fillna(0).astype(int)
+    counts = meta_df.groupby(group_col).size().reindex(order).fillna(0).astype(int)
     y_labels = [f"{cat} ({cnt}p)" for cat, cnt in zip(order, counts)]
     
     # build colormap mapping from counts -> color
     cmap = mpl.cm.viridis
     norm = mpl.colors.Normalize(vmin=counts.min(), vmax=counts.max())
     color_map = {cat: cmap(norm(cnt)) for cat, cnt in zip(order, counts)}
+    
+    return meta_df, order, counts, y_labels, color_map, medians, norm, cmap
 
-    # figure portrait
-    fig_w, fig_h = 8, max(8, 0.35 * len(order))
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-
-    # thicker violins: no inner to reduce clutter
+def plot_violin(ax: plt.Axes, result_df: pd.DataFrame, value_col: str, group_col: str, order: list, color_map: dict):
+    """Plots the violin plot."""
     sns.violinplot(
         x=value_col,
         y=group_col,
@@ -46,7 +45,8 @@ def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, value_col: st
         ax=ax,
     )
 
-    # jittered points overlay — slightly larger & semi-transp
+def plot_jitter(ax: plt.Axes, result_df: pd.DataFrame, value_col: str, group_col: str, order: list):
+    """Overlays jittered points on the violin plot."""
     sns.stripplot(
         x=value_col,
         y=group_col,
@@ -59,12 +59,25 @@ def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, value_col: st
         ax=ax,
     )
 
-    # annotate medians
-    medians = result_df.groupby(group_col)[value_col].median().reindex(order)
+def annotate_medians(ax: plt.Axes, medians: pd.Series):
+    """Annotates the medians on the plot."""
     offset = max(medians.max() * 0.005, 0.5)
     fmt = lambda x, pos=None: f"{x:,.0f}".replace(",", "'")
     for i, (cat, med) in enumerate(medians.items()):
         ax.text(med + offset, i, fmt(med), va="center", ha="left", fontsize=8, fontweight="bold", color="white")
+
+def plot_distribution(meta_df: pd.DataFrame, value_col: str, group_col: str, alias: str):
+    """Plots the distribution and median of a specified value column by a grouping column."""
+    (meta_df, order, counts, y_labels, color_map, 
+     medians, norm, cmap) = prepare_data(meta_df, group_col, value_col)
+
+    # figure portrait
+    fig_w, fig_h = 8, max(8, 0.35 * len(order))
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+
+    plot_violin(ax, meta_df, value_col, group_col, order, color_map)
+    plot_jitter(ax, meta_df, value_col, group_col, order)
+    annotate_medians(ax, medians)
 
     # set y labels and formatting
     ax.set_yticks(range(len(order)))
@@ -72,7 +85,7 @@ def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, value_col: st
     ax.set_xlabel(value_col)
     ax.set_ylabel("")
     ax.set_title(f"Distribution and median of {value_col} by {alias}")
-    ax.xaxis.set_major_formatter(FuncFormatter(fmt))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos=None: f"{x:,.0f}".replace(",", "'")))
     
     # create colorbar — adjust fraction to control thickness
     sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
@@ -82,14 +95,12 @@ def plot_richness(otu_counts: pd.DataFrame, meta_df: pd.DataFrame, value_col: st
     plt.tight_layout()
 
     save_fig(fig, "distribution", f"{value_col}_by_{alias}")
+    return None
 
-
-def main(value_col, group_col, alias):
-    otu_counts, meta_df = load_data()
-    plot_richness(otu_counts, meta_df, value_col, group_col, alias)
 
 if __name__ == "__main__":
-    main("otu_richness", "bioregion", 'bioregion')
+    meta_df = load_data()
+    plot_distribution(meta_df, "otu_richness", "bioregion", 'bioregion')
 
 """
 "signific_ger_95", 'soil type'
