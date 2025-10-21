@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
-from GLOBALS import DEFAULT_META, OUT_DIR
+from GLOBALS import DEFAULT_META, BIOREGION_PATH
 
 def _guess_points_crs(df: pd.DataFrame, x_col="x_theo", y_col="y_theo") -> str:
     xmax, ymax = df[x_col].abs().max(), df[y_col].abs().max()
@@ -10,12 +10,6 @@ def _guess_points_crs(df: pd.DataFrame, x_col="x_theo", y_col="y_theo") -> str:
         return "EPSG:4326"      # lon/lat
     return "EPSG:2154"          # Lambert-93 (RMQS coords)
 
-def _discover_eea_shp(base_dir: Path) -> Path:
-    # look for any .shp under data/eea8*/ (or its subfolders)
-    candidates = list(base_dir.glob("eea8*/*.shp")) or list(base_dir.glob("eea8*/*/*.shp"))
-    if not candidates:
-        raise FileNotFoundError(f"No EEA shapefile found under {base_dir/'eea8*'}")
-    return candidates[0]
 
 def _pick_region_column(gdf: gpd.GeoDataFrame) -> str:
     for col in ["BIOREGION", "NAME", "Region", "region", "BIO_NAME", "LEGEND", "legend"]:
@@ -68,8 +62,8 @@ def add_bioregion(
 def main():
     df = pd.read_csv(DEFAULT_META, index_col="id_site", encoding="windows-1252")
     df = add_bioregion(df)
-    out_csv = OUT_DIR / "biogeo_assignment.csv"
-    df[[ "x_theo", "y_theo", "biogeo_region"]].to_csv(out_csv, encoding="utf-8")
+    out_csv = BIOREGION_PATH
+    df[[ "x_theo", "y_theo", "bioregion"]].to_csv(out_csv, encoding="utf-8")
     print(f"Wrote: {out_csv}")
 
 if __name__ == "__main__":
