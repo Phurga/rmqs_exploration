@@ -2,7 +2,6 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
-from pathlib import Path
 
 from utilities import load_data, save_fig
 from GLOBALS import WORLD_PATH, LAND_USE_COLOR_MAPPING
@@ -26,14 +25,16 @@ def gdf_definition(metadata_df: pd.DataFrame):
         gdf = gdf.to_crs("EPSG:4326")
     return gdf
 
-def plot_sample_sites(gdf: gpd.GeoDataFrame, COLOR_MAP: dict, group_col: str, alias: str):
+def plot_sample_sites(gdf: gpd.GeoDataFrame, group_col: str, alias: str):
     # Load France geometry and clip to bounds
     world = gpd.read_file(WORLD_PATH)
     france = world[world["name"] == "France"].copy()
     france = france.clip(gdf.total_bounds)
 
     # Assign colors to each point based on land use
-    gdf["color"] = gdf[group_col].map(COLOR_MAP).fillna("gray")
+    if group_col == 'land_use':
+        COLOR_MAP = LAND_USE_COLOR_MAPPING
+        gdf["color"] = gdf[group_col].map(COLOR_MAP).fillna("gray")
 
     # Plotting
     fig, ax = plt.subplots(figsize=(12, 10))  # Adjusted figure size for legend
@@ -51,17 +52,14 @@ def plot_sample_sites(gdf: gpd.GeoDataFrame, COLOR_MAP: dict, group_col: str, al
     ax.set_xlim(gdf.bounds.minx.min() - 1, gdf.bounds.maxx.max() + 1)
     ax.set_ylim(gdf.bounds.miny.min() - 1, gdf.bounds.maxy.max() + 1)
 
-    # Add legend
-    # ax.legend(title="Land Use", loc="upper right") # handled by gdf_pts.plot
-
     plt.tight_layout()
     save_fig(fig, "map", f"france_{alias}")
     return None
 
 def main(group_col, alias):
-    _,metadata_df = load_data(top_n=9)  # optionally pass a different cutoff: load_metadata(top_n=15)
+    _,metadata_df = load_data(top_n=9, top_column=group_col)
     gdf_pts = gdf_definition(metadata_df)
-    plot_sample_sites(gdf_pts, LAND_USE_COLOR_MAPPING, group_col, alias)
+    plot_sample_sites(gdf_pts, group_col, alias)
 
 if __name__ == "__main__":
     main("wrb_guess", 'soil_class')

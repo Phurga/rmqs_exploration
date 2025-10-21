@@ -24,23 +24,24 @@ def build_pivot(meta: pd.DataFrame, rich: pd.DataFrame, top_n: int,
     return pvt
 
 
-def plot_heatmap(pvt: pd.DataFrame, land_col: str, soil_col: str, rich_col: str) -> None:
+def plot_heatmap(pvt: pd.DataFrame, land_col: str, soil_col: str, rich_col: str, land_col_alias: str, soil_col_alias: str) -> None:
     plt.figure(figsize=(12, 6))
     ax = sns.heatmap(pvt, cmap="viridis", annot=True, fmt=".1f", linewidths=0.5, linecolor="#eeeeee")
-    ax.set_xlabel(soil_col)
-    ax.set_ylabel(land_col)
-    title = f"{rich_col.capitalize()} by {land_col} x {soil_col}"
+    ax.set_xlabel(soil_col_alias)
+    ax.set_ylabel(land_col_alias)
+    title = f"{rich_col.capitalize()} by {land_col_alias} x {soil_col_alias}"
     ax.set_title(title)
     plt.tight_layout()
     save_fig(plt.gcf(), "heatmap", f"{rich_col}_by_{land_col}_x_{soil_col}")
     return None
 
 
-def main(value_col, land_col, soil_col) -> int:
+def main(value_col, land_col, land_col_alias, soil_col, soil_col_alias) -> int:
     rich, meta = load_data(top_n=10, top_column=soil_col)
     pvt = build_pivot(meta, rich, top_n=10, land_col=land_col, soil_col=soil_col, agg='median')
-    plot_heatmap(pvt, land_col, soil_col, value_col)
+    plot_heatmap(pvt, land_col, soil_col, value_col, land_col_alias, soil_col_alias)
     return None
 
+
 if __name__ == "__main__":
-	main("land_use", "wrb_guess", "otu_richness")
+	main("otu_richness", "land_use", "land_use", "wrb_guess", "soil_class" )
