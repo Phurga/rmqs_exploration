@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from GLOBALS import SOIL_METADATA_PATH, DEFAULT_META, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_PATH, SOIL_PROPERTIES_PATH
+from GLOBALS import SOIL_METADATA_PATH, SAMPLE_METADATA_PATH, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_RMQS_PATH, SOIL_PROPERTIES_PATH
 
 
 def build_land_use_from_desc(meta: pd.DataFrame):
@@ -34,12 +34,28 @@ def add_soil_metadata(metadata_df: pd.DataFrame):
     return merge
 
 def add_soil_properties(metadata_df: pd.DataFrame) -> pd.DataFrame:
-    soil_props = pd.read_csv(SOIL_PROPERTIES_PATH, index_col="id_site", encoding="windows-1252")
+    soil_props = pd.read_csv(SOIL_PROPERTIES_PATH, index_col="id_site", encoding="windows-1252", na_values=["ND"])
     soil_props.index = soil_props.index.astype(str)
-    metadata_df = metadata_df.merge(soil_props, left_index=True, right_index=True, how="left")
+    first_column = "type_profil_rmqs"
+    soil_props = soil_props.loc[:, first_column : ]
+    
+    # Attempt to convert columns to numeric types
+    for col in soil_props.columns:
+        if col in ["date_complete", "code_dept", "type_profil_rmqs"]:
+            continue
+        try:
+            soil_props[col] = pd.to_numeric(soil_props[col], errors='raise')
+        except ValueError:
+            print(f"{col} ({soil_props[col].iloc[0]}) could not be converted to numeric and will be ignored.")
+            pass  # Ignore columns that cannot be converted
+
+    # Completely arbitrary filter to investigate
+    soil_props = soil_props[soil_props['no_couche'] != 2]
+
+    metadata_df = metadata_df.merge(soil_props, left_index=True, right_index=True, how="inner")
     return metadata_df
 
-def load_data(otu_path: Path = DEFAULT_OTU_RICH, meta_path: Path = DEFAULT_META, filter_columns: list = None):
+def load_data(otu_path: Path = DEFAULT_OTU_RICH, meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = None):
     otu_counts = pd.read_csv(otu_path, sep=";", index_col="id_site", encoding="windows-1252")
     otu_counts.index = otu_counts.index.astype(str)
 
@@ -72,7 +88,7 @@ def save_fig(fig, folder, title):
     print(f"Saved figure to: {out_path}")
 
 def add_bioregion(metadata_df: pd.DataFrame) -> pd.DataFrame:
-    bioregions = pd.read_csv(BIOREGION_PATH, index_col="id_site", usecols=["id_site", "bioregion"], dtype=str)
+    bioregions = pd.read_csv(BIOREGION_RMQS_PATH, index_col="id_site", usecols=["id_site", "bioregion"], dtype=str)
     bioregions.index = bioregions.index.astype(str)
     metadata_df = metadata_df.merge(bioregions, left_index=True, right_index=True, how="left")
     return metadata_df

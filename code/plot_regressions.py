@@ -7,20 +7,28 @@ from utilities import load_data, save_fig
 # Load the metadata
 metadata_df = load_data()
 
+#remove columns with many na
+na_counts = metadata_df.isna().sum()
+cols_too_many_nas = na_counts[na_counts > 120].index.tolist()
+if cols_too_many_nas:
+    print(f"Dropping columns with >20 NAs: {cols_too_many_nas}")
+    metadata_df = metadata_df.drop(columns=cols_too_many_nas)
+
 # Define the dependent variable
 dependent_variable = 'otu_richness'
 
 # Get the list of independent variables from the metadata
 independent_variables = metadata_df.columns.tolist()
 independent_variables.remove(dependent_variable)
+#independent_variables = ["argile", "sable_grossier", 'carbone_16_5_1', 'ph_eau_6_1', "land_use", "wrb_guess", "bioregion"]
+metadata_df = metadata_df[[dependent_variable] + independent_variables].dropna() # Drop rows with missing values to avoid mismatched index in the plotting
 
 # Construct the regression formula
 formula = f"{dependent_variable} ~ " + " + ".join(independent_variables)
 
 # Perform the regression
 model = sm.ols(formula=formula, data=metadata_df)
-results = model.fit()
-
+results = model.fit(cov_type='HC0')
 # Print the regression results
 print(results.summary())
 
@@ -36,4 +44,4 @@ plt.plot([min(metadata_df[dependent_variable]), max(metadata_df[dependent_variab
          [min(metadata_df[dependent_variable]), max(metadata_df[dependent_variable])],
          color='red', linestyle='--')
 
-save_fig(plt.gcf(), "regression", "otu_richness_regression")
+save_fig(plt.gcf(), "regression", "otu_richness")

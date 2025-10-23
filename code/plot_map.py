@@ -63,7 +63,7 @@ def plot_map(metadata_df, group_col, alias, top_n = 9):
     plot_sample_sites(gdf_pts, group_col, alias)
 
 if __name__ == "__main__":
-    [group_col, alias] = ("wrb_guess", 'soil_class')
+    [group_col, alias] = ("bioregion", 'bioregion')
     metadata_df = load_data()
     plot_map(metadata_df, group_col, alias)
 
@@ -72,5 +72,6 @@ DIMENSIONS = [
     ("parent_material", 'parent_material'),
     ("desc_code_occupation3", 'land_use_fine'),
     ("land_use", 'land_use'),
-    ("wrb_guess", 'soil_class')
+    ("wrb_guess", 'soil_class'),
+    ("bioregion", 'bioregion'),
 ]

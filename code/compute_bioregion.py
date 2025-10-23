@@ -2,7 +2,9 @@ from pathlib import Path
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
-from GLOBALS import DEFAULT_META, BIOREGION_PATH
+
+from GLOBALS import SAMPLE_METADATA_PATH, BIOREGION_RMQS_PATH, EEA_SHP_BIOREGION_PATH
+from utilities import load_data
 
 def _guess_points_crs(df: pd.DataFrame, x_col="x_theo", y_col="y_theo") -> str:
     xmax, ymax = df[x_col].abs().max(), df[y_col].abs().max()
@@ -23,13 +25,12 @@ def _pick_region_column(gdf: gpd.GeoDataFrame) -> str:
 
 def add_bioregion(
     metadata_df: pd.DataFrame,
-    shp_path: Path | None = None,
+    shp_path: Path | None = EEA_SHP_BIOREGION_PATH,
     x_col: str = "x_theo",
     y_col: str = "y_theo",
     out_col: str = "biogeo_region",
 ) -> pd.DataFrame:
-    shp = r"C:\Users\aburg\Documents\calculations\rmqs_exploration\data\eea_v_3035_1_mio_biogeo-regions_p_2016_v01_r00\BiogeoRegions2016.shp"
-
+    
     # clean coords
     pts = metadata_df[[x_col, y_col]].copy()
     pts[x_col] = pd.to_numeric(pts[x_col], errors="coerce")
@@ -46,7 +47,7 @@ def add_bioregion(
     )
 
     # load polygons and reproject points to polygon CRS
-    regions = gpd.read_file(shp)
+    regions = gpd.read_file(shp_path)
     if gdf_pts.crs != regions.crs:
         gdf_pts = gdf_pts.to_crs(regions.crs)
 
@@ -60,9 +61,9 @@ def add_bioregion(
     return out
 
 def main():
-    df = pd.read_csv(DEFAULT_META, index_col="id_site", encoding="windows-1252")
+    df = load_data(filter_columns=["x_theo", "y_theo"])
     df = add_bioregion(df)
-    out_csv = BIOREGION_PATH
+    out_csv = BIOREGION_RMQS_PATH
     df[[ "x_theo", "y_theo", "bioregion"]].to_csv(out_csv, encoding="utf-8")
     print(f"Wrote: {out_csv}")
 

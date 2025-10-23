@@ -2,12 +2,12 @@ import warnings
 from pathlib import Path
 import pandas as pd
 
-from GLOBALS import DEFAULT_OTU, OUT_DIR
+from GLOBALS import OTU_TABLE_PATH, OUT_DIR
 
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-def read_and_write_richness(otu_path: Path = DEFAULT_OTU, out_dir: Path = OUT_DIR):
+def read_and_write_richness(otu_path: Path = OTU_TABLE_PATH, out_dir: Path = OUT_DIR):
     otu_df = pd.read_csv(
         otu_path,
         sep="\t",
