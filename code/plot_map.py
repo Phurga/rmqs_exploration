@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from utilities import load_data, save_fig, relabel_top_n
 from GLOBALS import WORLD_PATH, LAND_USE_COLOR_MAPPING
+FS = 24
 
 def gdf_definition(metadata_df: pd.DataFrame):
     # Determine CRS based on coordinate values
@@ -40,15 +41,30 @@ def plot_sample_sites(gdf: gpd.GeoDataFrame, group_col: str, alias: str):
     fig, ax = plt.subplots(figsize=(12, 10))  # Adjusted figure size for legend
     france.plot(ax=ax, color="#f0f0f0", edgecolor="k")
 
-    
-    # Plot points with color-coding
-    #gdf.plot(ax=ax, column=DIMENSION[0], cmap='Set1', legend=True, markersize=50, alpha=0.7, linewidth=0, categorical=True, marker='s',
-    #        legend_kwds={'loc': 'center left', 'bbox_to_anchor':(1,0.5), 'ncol': 2})
-    gdf.plot(ax=ax, column=group_col, cmap='Set1', legend=True, markersize=50, alpha=0.7, linewidth=0, categorical=True, marker='s')
+    #label = [f"{val} ({count})" for val, count in gdf[group_col].value_counts().items() if pd.notna(val)]
+    #gdf.plot(ax=ax, column=group_col, cmap='Set1', legend=True, markersize=20, alpha=0.7, linewidth=0, categorical=True, marker='o', labels=label)
 
-    ax.set_title("Sample Sites in France by " + alias, fontsize=16)
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
+    # Plot points with color-coding
+    gdf.plot(ax=ax, column=group_col, cmap='Set1', legend=True, markersize=50, alpha=0.7, linewidth=0, categorical=True, marker='s')
+    
+    # set title and axis labels using FS
+    #ax.set_title("Sample Sites in France by " + alias, fontsize=FS)
+    ax.set_xlabel("Longitude", fontsize=FS)
+    ax.set_ylabel("Latitude", fontsize=FS)
+
+    # set tick label size for both axes
+    ax.tick_params(axis='both', which='major', labelsize=FS)
+
+    # adjust legend text and title font sizes
+    ax.legend_.set_title(alias, prop={'size': FS})
+    legend = ax.get_legend()
+    if legend is not None:
+        for text in legend.get_texts():
+            text.set_fontsize(FS)
+        title = legend.get_title()
+        if title is not None:
+            title.set_fontsize(FS)
+
     ax.set_xlim(gdf.bounds.minx.min() - 1, gdf.bounds.maxx.max() + 1)
     ax.set_ylim(gdf.bounds.miny.min() - 1, gdf.bounds.maxy.max() + 1)
 
@@ -63,7 +79,7 @@ def plot_map(metadata_df, group_col, alias, top_n = 9):
     plot_sample_sites(gdf_pts, group_col, alias)
 
 if __name__ == "__main__":
-    [group_col, alias] = ("bioregion", 'bioregion')
+    [group_col, alias] = ("land_use", 'land_use')
     metadata_df = load_data()
     plot_map(metadata_df, group_col, alias)
 

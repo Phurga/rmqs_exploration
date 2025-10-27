@@ -11,6 +11,7 @@ SOIL_PROPERTIES_PATH = PROJECT_ROOT / "data_sm/RMQS/sample_site_metadata/RMQS1_a
 EEA_SHP_BIOREGION_PATH = PROJECT_ROOT / "data_sm/eea2016_biogeographical_regions/eea_v_3035_1_mio_biogeo-regions_p_2016_v01_r00/BiogeoRegions2016.shp"
 HILDA_LAND_USE_PATH = PROJECT_ROOT / "data_sm/hildap_vGLOB-1.0_geotiff/hildap_vGLOB-1.0_geotiff_wgs84/hildap_GLOB-v1.0_lulc-states/hilda_plus_2009_states_GLOB-v1-0_wgs84-nn.tif"
 FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/France_shapefile/fr_1km.shp"
+TAXONOMY_PATH = PROJECT_ROOT / "data_sm/RMQS/16S/rmqs1_16S_otu_taxonomy.tsv"
 # results
 OUT_DIR = PROJECT_ROOT / "results"
 DEFAULT_OTU_RICH = PROJECT_ROOT / "results/otu_richness.csv"

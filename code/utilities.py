@@ -27,6 +27,16 @@ def build_land_use_from_desc(meta: pd.DataFrame):
 
 def add_soil_metadata(metadata_df: pd.DataFrame):
     mapping = pd.read_csv(SOIL_METADATA_PATH)
+    
+    for col in mapping.columns:
+        if col in ["date_complete", "code_dept", "type_profil_rmqs"]:
+            continue
+        try:
+            mapping[col] = pd.to_numeric(mapping[col], errors='raise')
+        except ValueError:
+            #print(f"{col} ({mapping[col].iloc[0]}) could not be converted to numeric and will be ignored.")
+            pass  # Ignore columns that cannot be converted
+    
     merge = metadata_df.merge(
         mapping, left_on="signific_ger_95", right_on="name", how="left"
     )
@@ -36,6 +46,9 @@ def add_soil_metadata(metadata_df: pd.DataFrame):
 def add_soil_properties(metadata_df: pd.DataFrame) -> pd.DataFrame:
     soil_props = pd.read_csv(SOIL_PROPERTIES_PATH, index_col="id_site", encoding="windows-1252", na_values=["ND"])
     soil_props.index = soil_props.index.astype(str)
+    # Keep only the first row for any duplicated index
+    soil_props = soil_props[~soil_props.index.duplicated(keep='first')]
+    
     first_column = "type_profil_rmqs"
     soil_props = soil_props.loc[:, first_column : ]
     
@@ -49,24 +62,25 @@ def add_soil_properties(metadata_df: pd.DataFrame) -> pd.DataFrame:
             print(f"{col} ({soil_props[col].iloc[0]}) could not be converted to numeric and will be ignored.")
             pass  # Ignore columns that cannot be converted
 
-    # Completely arbitrary filter to investigate
-    soil_props = soil_props[soil_props['no_couche'] != 2]
-
-    metadata_df = metadata_df.merge(soil_props, left_index=True, right_index=True, how="inner")
+    metadata_df = metadata_df.merge(soil_props, left_index=True, right_index=True, how="left")
     return metadata_df
 
-def load_data(otu_path: Path = DEFAULT_OTU_RICH, meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = None):
-    otu_counts = pd.read_csv(otu_path, sep=";", index_col="id_site", encoding="windows-1252")
-    otu_counts.index = otu_counts.index.astype(str)
 
+def add_otu(meta_df: pd.DataFrame) -> pd.DataFrame:
+        otu_counts = pd.read_csv(DEFAULT_OTU_RICH, sep=";", index_col="id_site", encoding="windows-1252")
+        otu_counts.index = otu_counts.index.astype(str)
+        meta_df = meta_df.merge(otu_counts, how="right", left_index=True, right_index=True)
+        return meta_df
+
+def load_data(meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = None):
     meta_df = pd.read_csv(meta_path, index_col="id_site", encoding="windows-1252").dropna()
     meta_df.index = meta_df.index.astype(str)
 
+    meta_df = add_otu(meta_df)
     meta_df = build_land_use_from_desc(meta_df)
     meta_df = add_soil_metadata(meta_df)
     meta_df = add_bioregion(meta_df)
     meta_df = add_soil_properties(meta_df)
-    meta_df = meta_df.merge(otu_counts, how="inner", left_index=True, right_index=True)
 
     if filter_columns:
         meta_df = meta_df[filter_columns]
@@ -92,3 +106,7 @@ def add_bioregion(metadata_df: pd.DataFrame) -> pd.DataFrame:
     bioregions.index = bioregions.index.astype(str)
     metadata_df = metadata_df.merge(bioregions, left_index=True, right_index=True, how="left")
     return metadata_df
+
+if __name__ == "__main__":
+    load_data(filter_columns=["x_theo", "y_theo"])
+    

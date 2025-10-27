@@ -4,6 +4,7 @@ from rasterio import mask
 import matplotlib.pyplot as plt
 import contextily as ctx
 import numpy as np  # Import numpy
+import matplotlib.colors
 
 from GLOBALS import HILDA_LAND_USE_PATH, FRANCE_BORDERS_PATH, FRANCE_HILDA_LAND_USE_PATH
 from utilities import save_fig
@@ -41,32 +42,35 @@ def clip_to_france():
     return hilda_image, hilda_transform
 
 def plot_hilda_land_use_with_france():
-    # Load the world borders
-    hilda_image = rasterio.open(FRANCE_HILDA_LAND_USE_PATH)
+    # Load the raster data
+    with rasterio.open(FRANCE_HILDA_LAND_USE_PATH) as src:
+        hilda_image = src.read(1)  # Read the first band
+        hilda_transform = src.transform
+        hilda_crs = src.crs
     
     # Define color map for land use classes
     cmap = {
-        11: 'forestgreen',  # Naturally regenerating forest without human activities
-        20: 'darkgreen',     # Naturally regenerating forest with human activities
-        31: 'lightgreen',    # Planted forest
-        32: 'yellowgreen',   # Short rotation plantations
-        40: 'darkkhaki',      # Oil palm plantations
-        53: 'saddlebrown'     # Agroforestry
+        11: matplotlib.colors.to_rgb('forestgreen'),  # Naturally regenerating forest without human activities
+        20: matplotlib.colors.to_rgb('darkgreen'),     # Naturally regenerating forest with human activities
+        31: matplotlib.colors.to_rgb('lightgreen'),    # Planted forest
+        32: matplotlib.colors.to_rgb('yellowgreen'),   # Short rotation plantations
+        40: matplotlib.colors.to_rgb('darkkhaki'),      # Oil palm plantations
+        53: matplotlib.colors.to_rgb('saddlebrown')     # Agroforestry
     }
 
-    # Convert land use IDs to colors
-    color_image = np.zeros((hilda_image.shape[0], hilda_image.shape[1], 3), dtype=np.uint8)
-    for land_use_id, color in cmap.items():
-        color_rgb = tuple(int(color[i:i+2], 16) for i in (1, 3, 5))  # Convert hex to RGB
-        color_image[hilda_image == land_use_id] = color_rgb
+    # Convert the image data to RGB using the color map
+    hilda_rgb = np.zeros((hilda_image.shape[0], hilda_image.shape[1], 3), dtype=np.uint8)
+    for value, color in cmap.items():
+        hilda_rgb[hilda_image == value] = np.array(color)
 
-    # Plotting
-    fig, ax = plt.subplots(figsize=(12, 12))
+    # Create a matplotlib figure and axes
+    fig, ax = plt.subplots(figsize=(10, 10))
 
-    # Set plot title and labels
-    ax.set_title('HILDA Land Use with France Borders')
-    ax.set_xlabel('Longitude')
-    ax.set_ylabel('Latitude')
+    # Display the RGB image
+    ax.imshow(hilda_rgb, transform=hilda_transform)
+
+    ax.set_title('HILDA Land Use in France')
+    ax.axis('off')
 
     # Show the plot
     save_fig(fig, "map", "france_hilda_land_use")
