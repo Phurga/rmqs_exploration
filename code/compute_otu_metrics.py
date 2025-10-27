@@ -30,6 +30,7 @@ def read_otu_table(otu_path: Path = OTU_TABLE_PATH):
         low_memory=False,
         encoding="windows-1252",
     )
+    otu_df.index = otu_df.index.astype(str).str.strip()
     return otu_df
 
 def compute_mean_level_abundance(otu_table: pd.DataFrame, taxonomy: pd.DataFrame, level: str = "ORDER") -> pd.DataFrame:
@@ -65,6 +66,7 @@ def read_taxonomy(taxonomy_path: Path = TAXONOMY_PATH):
         low_memory=False,
         encoding="windows-1252"
     )
+    taxonomy.index = taxonomy.index.astype(str).str.strip()
     # unify missing labels
     for level in ["KINGDOM", "PHYLUM", "CLASS", "ORDER", "FAMILY", "GENUS"]:
         taxonomy[level] = taxonomy[level].fillna(f"unclassified_{level}").astype(str)
