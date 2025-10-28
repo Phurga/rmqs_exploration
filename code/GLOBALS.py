@@ -17,6 +17,7 @@ OUT_DIR = PROJECT_ROOT / "results"
 DEFAULT_OTU_RICH = PROJECT_ROOT / "results/otu_richness.csv"
 BIOREGION_RMQS_PATH = PROJECT_ROOT / "results/biogeo_assignment.csv"
 FRANCE_HILDA_LAND_USE_PATH = PROJECT_ROOT / "results/land_use_france.tif"
+LAND_USE_INTENSITY_PATH = PROJECT_ROOT / "results/land_use_intensity.csv"
 
 
 LAND_USE_SIMPLE_MAPPING = {
@@ -42,3 +43,13 @@ LAND_USE_COLOR_MAPPING = {
     "coniferous forests": "red",
     "permanent crops": "blue",
 }
+
+LAND_USE_INTENSITY_MAPPING = {
+        "urban sites": 100,
+        "natural sites": 0,
+        "annual crops": 90,
+        "meadows": 50,
+        "broadleaved forests": 30,
+        "coniferous forests": 40,   
+        "permanent crops": 80
+    }

@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from GLOBALS import SOIL_METADATA_PATH, SAMPLE_METADATA_PATH, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_RMQS_PATH, SOIL_PROPERTIES_PATH
+from GLOBALS import SOIL_METADATA_PATH, SAMPLE_METADATA_PATH, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_RMQS_PATH, SOIL_PROPERTIES_PATH, LAND_USE_INTENSITY_MAPPING
 
 
 def build_land_use_from_desc(meta: pd.DataFrame):
@@ -10,7 +10,7 @@ def build_land_use_from_desc(meta: pd.DataFrame):
     - for 'surfaces boisees' use desc_code_occupation3 but only keep allowed subclasses
     - rows with other forest subclasses are set to NaN (dropped later)
     """
-
+    #build custom land use classes
     def make_custom(row):
         keep1 = "surfaces boisees"
         keep3 = "forets caducifoliees"
@@ -23,6 +23,9 @@ def build_land_use_from_desc(meta: pd.DataFrame):
 
     meta["land_use"] = meta.apply(make_custom, axis=1)
     meta["land_use"] = meta["land_use"].map(LAND_USE_SIMPLE_MAPPING)
+
+    #add land use intensity levels
+    meta["land_use_intensity"] = meta["land_use"].map(LAND_USE_INTENSITY_MAPPING)
     return meta
 
 def add_soil_metadata(metadata_df: pd.DataFrame):
@@ -96,6 +99,8 @@ def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
     return series
 
 def save_fig(fig, folder, title):
+    import matplotlib.pyplot as plt
+    plt.tight_layout()
     out_path = Path(OUT_DIR / f"{folder}/{folder}_{title}.png")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
