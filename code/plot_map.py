@@ -4,7 +4,7 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 
 from utilities import load_data, save_fig, relabel_top_n
-from GLOBALS import WORLD_PATH, LAND_USE_COLOR_MAPPING
+from GLOBALS import FRANCE_BORDERS_PATH, LAND_USE_COLOR_MAPPING
 FS = 24
 
 def gdf_definition(metadata_df: pd.DataFrame):
@@ -26,62 +26,51 @@ def gdf_definition(metadata_df: pd.DataFrame):
         gdf = gdf.to_crs("EPSG:4326")
     return gdf
 
-def plot_sample_sites(gdf: gpd.GeoDataFrame, group_col: str, alias: str):
-    # Load France geometry and clip to bounds
-    world = gpd.read_file(WORLD_PATH)
-    france = world[world["name"] == "France"].copy()
-    france = france.clip(gdf.total_bounds)
-
-    # Assign colors to each point based on land use
-    if group_col == 'land_use':
-        COLOR_MAP = LAND_USE_COLOR_MAPPING
-        gdf["color"] = gdf[group_col].map(COLOR_MAP).fillna("gray")
-
-    # Plotting
+def plot_sample_sites_france(gdf: gpd.GeoDataFrame, group_col: str, alias: str, categorical: bool) -> None:
     fig, ax = plt.subplots(figsize=(12, 10))  # Adjusted figure size for legend
-    france.plot(ax=ax, color="#f0f0f0", edgecolor="k")
+    # Load France geometry and clip to bounds
+    france = gpd.read_file(FRANCE_BORDERS_PATH).to_crs(gdf.crs)
+    france.plot(ax=ax, kind='geo', color='white', edgecolor='black')
 
-    #label = [f"{val} ({count})" for val, count in gdf[group_col].value_counts().items() if pd.notna(val)]
-    #gdf.plot(ax=ax, column=group_col, cmap='Set1', legend=True, markersize=20, alpha=0.7, linewidth=0, categorical=True, marker='o', labels=label)
+    # Choose colormap based on whether the data is categorical or continuous
+    if categorical:
+        cmap = 'Set1'  # discrete colormap for categories
+        if group_col == 'land_use': # Assign colors to each point based on land use (special case)
+            gdf["color"] = gdf[group_col].map(LAND_USE_COLOR_MAPPING).fillna("gray")
+    else:
+        cmap = 'viridis'  # continuous colormap for ranges
 
-    # Plot points with color-coding
-    gdf.plot(ax=ax, column=group_col, cmap='Set1', legend=True, markersize=50, alpha=0.7, linewidth=0, categorical=True, marker='s')
     
+    gdf.plot(ax=ax, kind='geo', column=group_col, cmap=cmap, legend=True, markersize=30, categorical=categorical, marker='o', legend_kwds={'label': alias})
+
     # set title and axis labels using FS
-    #ax.set_title("Sample Sites in France by " + alias, fontsize=FS)
+    ax.set_title("Sample Sites in France by " + alias, fontsize=FS)
     ax.set_xlabel("Longitude", fontsize=FS)
     ax.set_ylabel("Latitude", fontsize=FS)
 
-    # set tick label size for both axes
-    ax.tick_params(axis='both', which='major', labelsize=FS)
-
     # adjust legend text and title font sizes
-    ax.legend_.set_title(alias, prop={'size': FS})
-    legend = ax.get_legend()
-    if legend is not None:
-        for text in legend.get_texts():
+    if ax.get_legend() is not None:
+        ax.get_legend().set_title(alias, prop={'size': FS})
+        for text in ax.get_legend().get_texts():
             text.set_fontsize(FS)
-        title = legend.get_title()
+        title = ax.get_legend().get_title()
         if title is not None:
             title.set_fontsize(FS)
-
-    ax.set_xlim(gdf.bounds.minx.min() - 1, gdf.bounds.maxx.max() + 1)
-    ax.set_ylim(gdf.bounds.miny.min() - 1, gdf.bounds.maxy.max() + 1)
-
+    
     plt.tight_layout()
     save_fig(fig, "map", f"france_{alias}")
-    return None
+    return fig
 
-def plot_map(metadata_df, group_col, alias, top_n = 9):
+def plot_map(metadata_df, group_col, alias, categorical=True, top_n = 9) -> None:
     if top_n is not None:
         metadata_df[group_col] = relabel_top_n(metadata_df[group_col], top_n)
     gdf_pts = gdf_definition(metadata_df)
-    plot_sample_sites(gdf_pts, group_col, alias)
+    fig = plot_sample_sites_france(gdf_pts, group_col, alias, categorical)
+    return fig
 
 if __name__ == "__main__":
-    [group_col, alias] = ("land_use", 'land_use')
     metadata_df = load_data()
-    plot_map(metadata_df, group_col, alias)
+    plot_map(metadata_df, "ph_eau_6_1", "soil_ph", False, None)
 
 DIMENSIONS = [
     ("signific_ger_95", 'soil_type'),
@@ -90,4 +79,5 @@ DIMENSIONS = [
     ("land_use", 'land_use'),
     ("wrb_guess", 'soil_class'),
     ("bioregion", 'bioregion'),
+    ("ph_eau_6_1", "soil_ph", False, None)
 ]

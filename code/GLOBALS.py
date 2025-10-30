@@ -10,7 +10,8 @@ SOIL_METADATA_PATH = PROJECT_ROOT / "data_sm/RMQS/soil_data.csv" #generated with
 SOIL_PROPERTIES_PATH = PROJECT_ROOT / "data_sm/RMQS/sample_site_metadata/RMQS1_analyses_composites_18_11_2021_virgule.csv"
 EEA_SHP_BIOREGION_PATH = PROJECT_ROOT / "data_sm/eea2016_biogeographical_regions/eea_v_3035_1_mio_biogeo-regions_p_2016_v01_r00/BiogeoRegions2016.shp"
 HILDA_LAND_USE_PATH = PROJECT_ROOT / "data_sm/hildap_vGLOB-1.0_geotiff/hildap_vGLOB-1.0_geotiff_wgs84/hildap_GLOB-v1.0_lulc-states/hilda_plus_2009_states_GLOB-v1-0_wgs84-nn.tif"
-FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/France_shapefile/fr_1km.shp"
+FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/France_shapefile/fr_10km.shp"
+FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/fr.json"
 TAXONOMY_PATH = PROJECT_ROOT / "data_sm/RMQS/16S/rmqs1_16S_otu_taxonomy.tsv"
 # results
 OUT_DIR = PROJECT_ROOT / "results"
@@ -25,7 +26,6 @@ LAND_USE_SIMPLE_MAPPING = {
     "milieux naturels particuliers": "natural sites",              
     "parcs et jardins": "urban sites",                         
     "successions culturales": "annual crops",                     
-    "surfaces boisees": "woods",                          
     "surfaces toujours en herbe": "meadows",               
     "forets caducifoliees": "broadleaved forests",
     "forets de coniferes": "coniferous forests",
@@ -47,9 +47,9 @@ LAND_USE_COLOR_MAPPING = {
 LAND_USE_INTENSITY_MAPPING = {
         "urban sites": 100,
         "natural sites": 0,
-        "annual crops": 90,
+        "annual crops": 80,
         "meadows": 50,
-        "broadleaved forests": 30,
-        "coniferous forests": 40,   
-        "permanent crops": 80
+        "broadleaved forests": 40,
+        "coniferous forests": 30,   
+        "permanent crops": 90
     }

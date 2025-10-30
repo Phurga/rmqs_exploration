@@ -65,13 +65,14 @@ def plot_level_land_use_table(level_land_use_table, level, site_metadata, level_
     return None
 
 def main():
-    if False:
+    if True:
         otu_taxonomy = read_taxonomy()
         site_otu_table = read_otu_table()
         site_metadata = load_data()
-        import pickle
-        with open("./results/temp.pkl", "wb") as f:
-            pickle.dump((otu_taxonomy, site_otu_table, site_metadata), f)
+        if False:
+            import pickle
+            with open("./results/temp.pkl", "wb") as f:
+                pickle.dump((otu_taxonomy, site_otu_table, site_metadata), f)
     else:
         import pickle
         with open("./results/temp.pkl", "rb") as f:

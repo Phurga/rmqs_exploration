@@ -99,12 +99,13 @@ def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
     return series
 
 def save_fig(fig, folder, title):
-    import matplotlib.pyplot as plt
-    plt.tight_layout()
+    from matplotlib.pyplot import tight_layout
+    tight_layout()
     out_path = Path(OUT_DIR / f"{folder}/{folder}_{title}.png")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
     print(f"Saved figure to: {out_path}")
+    return None
 
 def add_bioregion(metadata_df: pd.DataFrame) -> pd.DataFrame:
     bioregions = pd.read_csv(BIOREGION_RMQS_PATH, index_col="id_site", usecols=["id_site", "bioregion"], dtype=str)
