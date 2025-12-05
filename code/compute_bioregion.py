@@ -1,39 +1,33 @@
 from pathlib import Path
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point
 
-from GLOBALS import BIOREGION_RMQS_PATH, EEA_SHP_BIOREGION_PATH, ECOREGIONS_PATH
-from utilities import load_data, save_fig, box_to_france, generate_rmqs_geodataframe
+import GLOBALS
+from utilities import load_data, generate_rmqs_geodataframe
 
-def add_bioregion(
-    data: pd.DataFrame,
-    shp_path: Path | None = EEA_SHP_BIOREGION_PATH,
-    out_col: str = "bioregion") -> pd.DataFrame:
-    
-    rmqs_pts = generate_rmqs_geodataframe(data)
+def add_region(
+    shp_path: Path,
+    shp_col: str,
+    out_col: str,
+    out_file: Path) -> pd.DataFrame:
+    """Assign bioregions or ecoregions to RMQS sample sites based on a shapefile."""
+    rmqs_pts = generate_rmqs_geodataframe(load_data())
 
     # load polygons and reproject points to polygon CRS
     regions = gpd.read_file(shp_path)
     if rmqs_pts.crs != regions.crs:
         regions = regions.to_crs(rmqs_pts.crs)
 
-    region_col = "code"
-    regions = regions[[region_col, "geometry"]].copy()
+    regions[out_col] = regions[shp_col] # renaming
+    # spatial join to assign regions
+    joined = gpd.sjoin(rmqs_pts, regions[[out_col, "geometry"]], how="left", rsuffix = None)
 
-    joined = gpd.sjoin(rmqs_pts, regions, how="left")
-    data[out_col] = joined[region_col]
+    # save output
+    joined[[ "x_theo", "y_theo", out_col]].to_csv(out_file, encoding="utf-8")
+    print(f"Wrote: {GLOBALS.OUT_DIR / f'{out_col}_assignment.csv'}")
+    return joined
 
-    return data
-    
-
-
-def main():
-    df = load_data()
-    df = add_bioregion(df)
-    out_csv = BIOREGION_RMQS_PATH
-    df[[ "x_theo", "y_theo", "bioregion"]].to_csv(out_csv, encoding="utf-8")
-    print(f"Wrote: {out_csv}")
 
 if __name__ == "__main__":
-    main()
+    add_region(GLOBALS.EEA_SHP_BIOREGION_PATH, shp_col="code", out_col="bioregion", out_file = GLOBALS.RMQS_BIOREGION_CSV_PATH)
+    add_region(GLOBALS.ECOREGIONS_PATH, shp_col="ECO_NAME", out_col="ecoregion", out_file = GLOBALS.RMQS_ECOREGION_CSV_PATH)

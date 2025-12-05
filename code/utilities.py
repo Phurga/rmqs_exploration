@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
-from GLOBALS import SAMPLE_DATASET_PATH, FULL_DATASET_PATH, SOIL_METADATA_PATH, SAMPLE_METADATA_PATH, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_RMQS_PATH, SOIL_PROPERTIES_PATH, LAND_USE_INTENSITY_MAPPING
+
+import GLOBALS
 
 def generate_rmqs_geodataframe(data: pd.DataFrame):
     """Generate a GeoDataFrame from RMQS data."""
@@ -24,10 +25,16 @@ def generate_rmqs_geodataframe(data: pd.DataFrame):
         gdf = gdf.to_crs("EPSG:4326")
     return gdf
 
-def box_to_france(ax):
-    """Set axis limits to France extent in EPSG:2154"""
-    ax.set_xlim(0e6, 1.1e6)
-    ax.set_ylim(6.0e6, 7.25e6)
+def box_to_france(ax, crs):
+    """Bound a ax to France extent"""
+    match crs:
+        case "EPSG:2154":  
+            bounds = GLOBALS.FRANCE_BOX_EPSG_2154
+        case "EPSG:3035":
+            bounds = GLOBALS.FRANCE_BOX_EPSG_3035
+    
+    ax.set_xlim(*bounds[[0, 2]])
+    ax.set_ylim(*bounds[[1, 3]])
     return ax
 
 def build_land_use_from_desc(meta: pd.DataFrame):
@@ -49,14 +56,14 @@ def build_land_use_from_desc(meta: pd.DataFrame):
         return row["desc_code_occupation1"]
 
     meta["land_use"] = meta.apply(make_custom, axis=1)
-    meta["land_use"] = meta["land_use"].map(LAND_USE_SIMPLE_MAPPING)
+    meta["land_use"] = meta["land_use"].map(GLOBALS.LAND_USE_SIMPLE_MAPPING)
 
     #add land use intensity levels
-    meta["land_use_intensity"] = meta["land_use"].map(LAND_USE_INTENSITY_MAPPING)
+    meta["land_use_intensity"] = meta["land_use"].map(GLOBALS.LAND_USE_INTENSITY_MAPPING)
     return meta
 
 def add_soil_metadata(metadata_df: pd.DataFrame):
-    mapping = pd.read_csv(SOIL_METADATA_PATH)
+    mapping = pd.read_csv(GLOBALS.SOIL_METADATA_PATH)
     
     for col in mapping.columns:
         if col in ["date_complete", "code_dept", "type_profil_rmqs"]:
@@ -74,7 +81,7 @@ def add_soil_metadata(metadata_df: pd.DataFrame):
     return merge
 
 def add_soil_properties(metadata_df: pd.DataFrame) -> pd.DataFrame:
-    soil_props = pd.read_csv(SOIL_PROPERTIES_PATH, index_col="id_site", encoding="windows-1252", na_values=["ND"])
+    soil_props = pd.read_csv(GLOBALS.SOIL_PROPERTIES_PATH, index_col="id_site", encoding="windows-1252", na_values=["ND"])
     soil_props.index = soil_props.index.astype(str)
     # Keep only the first row for any duplicated index
     soil_props = soil_props[~soil_props.index.duplicated(keep='first')]
@@ -97,15 +104,15 @@ def add_soil_properties(metadata_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_otu(meta_df: pd.DataFrame) -> pd.DataFrame:
-        otu_counts = pd.read_csv(DEFAULT_OTU_RICH, sep=";", index_col="id_site", encoding="windows-1252")
+        otu_counts = pd.read_csv(GLOBALS.DEFAULT_OTU_RICH, sep=";", index_col="id_site", encoding="windows-1252")
         otu_counts.index = otu_counts.index.astype(str)
         meta_df = meta_df.merge(otu_counts, how="right", left_index=True, right_index=True)
         return meta_df
 
-def load_data(meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = None, skip = True):
+def load_data(meta_path: Path = GLOBALS.SAMPLE_METADATA_PATH, filter_columns: list = None, skip = True):
     """ Either loads data from FULL_DATASET_PATH (skip = True) or builds it from raw files."""
     if skip:
-        return pd.read_csv(FULL_DATASET_PATH, index_col="id_site", encoding="windows-1252")
+        return pd.read_csv(GLOBALS.FULL_DATASET_PATH, index_col="id_site", encoding="windows-1252")
 
     meta_df = pd.read_csv(meta_path, index_col="id_site", encoding="windows-1252").dropna()
     meta_df.index = meta_df.index.astype(str)
@@ -119,12 +126,12 @@ def load_data(meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = Non
     if filter_columns:
         meta_df = meta_df[filter_columns]
     
-    with open(SAMPLE_DATASET_PATH, "w") as f:
+    with open(GLOBALS.SAMPLE_DATASET_PATH, "w") as f:
         f.write("column_name, type, example_value\n")
         for col in meta_df.columns:
             f.write(f"\"{col}\", \"{meta_df[col].dtype}\", \"{meta_df[col].iloc[0]}\"\n")
 
-    with open(FULL_DATASET_PATH, "w") as f:
+    with open(GLOBALS.FULL_DATASET_PATH, "w") as f:
         meta_df.to_csv(f)
     return meta_df
 
@@ -139,14 +146,14 @@ def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
 def save_fig(fig, folder, title):
     from matplotlib.pyplot import tight_layout
     tight_layout()
-    out_path = Path(OUT_DIR / f"{folder}/{folder}_{title}.png")
+    out_path = Path(GLOBALS.OUT_DIR / f"{folder}/{folder}_{title}.png")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
     print(f"Saved figure to: {out_path}")
     return None
 
 def add_bioregion(metadata_df: pd.DataFrame) -> pd.DataFrame:
-    bioregions = pd.read_csv(BIOREGION_RMQS_PATH, index_col="id_site", usecols=["id_site", "bioregion"], dtype=str)
+    bioregions = pd.read_csv(GLOBALS.RMQS_BIOREGION_CSV_PATH, index_col="id_site", usecols=["id_site", "bioregion"], dtype=str)
     bioregions.index = bioregions.index.astype(str)
     metadata_df = metadata_df.merge(bioregions, left_index=True, right_index=True, how="left")
     return metadata_df

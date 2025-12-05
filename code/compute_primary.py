@@ -6,17 +6,16 @@ import contextily as ctx
 import numpy as np  # Import numpy
 import matplotlib.colors
 
-from GLOBALS import HILDA_LAND_USE_PATH, FRANCE_BORDERS_PATH, FRANCE_HILDA_LAND_USE_PATH
 from utilities import save_fig
-
+import GLOBALS
 
 def clip_to_france():
     # Load the raster data
-    hilda_raster = rasterio.open(HILDA_LAND_USE_PATH)
+    hilda_raster = rasterio.open(GLOBALS.HILDA_LAND_USE_PATH)
     hilda_crs = hilda_raster.crs
 
     # Load the world borders
-    france = gpd.read_file(FRANCE_BORDERS_PATH).to_crs(hilda_crs)
+    france = gpd.read_file(GLOBALS.FRANCE_BORDERS_PATH).to_crs(hilda_crs)
 
     # Clip the raster data to France's borders
     try:
@@ -43,7 +42,7 @@ def clip_to_france():
 
 def plot_hilda_land_use_with_france():
     # Load the raster data
-    with rasterio.open(FRANCE_HILDA_LAND_USE_PATH) as src:
+    with rasterio.open(GLOBALS.FRANCE_HILDA_LAND_USE_PATH) as src:
         hilda_image = src.read(1)  # Read the first band
         hilda_transform = src.transform
         hilda_crs = src.crs

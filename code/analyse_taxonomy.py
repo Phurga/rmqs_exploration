@@ -2,8 +2,7 @@ import pandas as pd
 
 from compute_otu_metrics import read_otu_table, read_taxonomy
 from utilities import load_data, save_fig
-from GLOBALS import LAND_USE_INTENSITY_MAPPING
-
+import GLOBALS
 
 def build_level_site_table(otu_taxonomy: pd.DataFrame, site_otu_table: pd.DataFrame, level: str) -> pd.DataFrame:
     """
@@ -36,7 +35,7 @@ def build_level_land_use_table(level_site_table: pd.DataFrame, site_metadata: pd
     level_land_use_table = level_land_use_table.div(level_land_use_table.max(axis=0), axis=1) * 100
     
     #change land use display order based on land use intensity    
-    mapping = pd.DataFrame(LAND_USE_INTENSITY_MAPPING.items(), columns=["land_use", "intensity_level"]).set_index("land_use")
+    mapping = pd.DataFrame(GLOBALS.LAND_USE_INTENSITY_MAPPING.items(), columns=["land_use", "intensity_level"]).set_index("land_use")
     level_land_use_table = level_land_use_table.reindex(mapping.sort_values("intensity_level").index)
     
     #change level display order of columns based on value for "annual crops"

@@ -2,12 +2,11 @@ import warnings
 from pathlib import Path
 import pandas as pd
 
-from GLOBALS import OTU_TABLE_PATH, OUT_DIR, TAXONOMY_PATH
-
+import GLOBALS
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-def compute_otu_richness(otu_df: pd.DataFrame, out_dir: Path = OUT_DIR):
+def compute_otu_richness(otu_df: pd.DataFrame, out_dir: Path = GLOBALS.OUT_DIR):
     # presence/absence richness per sample (rows = samples)
     otu_counts = (otu_df > 0).sum(axis=1).astype(int)
     otu_counts.name = "otu_richness"
@@ -21,7 +20,7 @@ def compute_total_otu_abundance(otu_df: pd.DataFrame):    # ensure index is stri
     otu_abundance = otu_abundance.to_frame()
     return otu_abundance
 
-def read_otu_table(otu_path: Path = OTU_TABLE_PATH):
+def read_otu_table(otu_path: Path = GLOBALS.OTU_TABLE_PATH):
     otu_df = pd.read_csv(
         otu_path,
         sep="\t",
@@ -58,7 +57,7 @@ def compute_mean_level_abundance(otu_table: pd.DataFrame, taxonomy: pd.DataFrame
     mean_level_abundance = taxon_abundance.mean().to_frame(name=f"mean_{level}_abundance")
     return mean_level_abundance
 
-def read_taxonomy(taxonomy_path: Path = TAXONOMY_PATH):
+def read_taxonomy(taxonomy_path: Path = GLOBALS.TAXONOMY_PATH):
     taxonomy = pd.read_csv(
         taxonomy_path,
         sep="\t",
@@ -73,7 +72,7 @@ def read_taxonomy(taxonomy_path: Path = TAXONOMY_PATH):
         taxonomy[level] = taxonomy[level].replace("Unknown", f"unclassified_{level}")
     return taxonomy
 
-def write_otu_metrics(otu_metrics: pd.DataFrame, out_dir: Path = OUT_DIR):
+def write_otu_metrics(otu_metrics: pd.DataFrame, out_dir: Path = GLOBALS.OUT_DIR):
     csv_out = out_dir / f"otu_metrics.csv"
     otu_metrics.to_csv(csv_out, sep=";", index=True)
     print(f"Wrote {otu_metrics.columns} to: {csv_out}")

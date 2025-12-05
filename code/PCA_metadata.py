@@ -35,7 +35,7 @@ from scipy.stats import pearsonr
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from utilities import load_data
-from GLOBALS import OUT_DIR
+import GLOBALS
 
 def _prepare_metadata(metadata_df: pd.DataFrame, categorical: str):
     """
@@ -114,7 +114,7 @@ def _ensure_outdir():
     Returns
     - Path to output directory for PCA artifacts
     """
-    p = Path(OUT_DIR) / "PCA"
+    p = Path(GLOBALS.OUT_DIR) / "PCA"
     p.mkdir(parents=True, exist_ok=True)
     return p
 

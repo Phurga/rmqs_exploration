@@ -3,27 +3,28 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 
 from utilities import load_data, save_fig, relabel_top_n, generate_rmqs_geodataframe, box_to_france
-from GLOBALS import FRANCE_BORDERS_PATH, LAND_USE_COLOR_MAPPING, EEA_SHP_BIOREGION_PATH, ECOREGIONS_PATH
+import GLOBALS
 
 FONTSIZE = 24
 
 def plot_rmqs_with_attribute(data, attribute, attribute_alias, categorical=True, top_n = 9) -> None:
     """Plot RMQS sample sites in France colored by a specified attribute."""
     
+    # Relabel to 'others' if there are too many categories to display
     if top_n is not None:
         data[attribute] = relabel_top_n(data[attribute], top_n)
     gdf = generate_rmqs_geodataframe(data)
     
     fig, ax = plt.subplots(figsize=(12, 10))  # Adjusted figure size for legend
     # Load France geometry and clip to bounds
-    france = gpd.read_file(FRANCE_BORDERS_PATH).to_crs(gdf.crs)
+    france = gpd.read_file(GLOBALS.FRANCE_BORDERS_PATH).to_crs(gdf.crs)
     france.plot(ax=ax, kind='geo', color='white', edgecolor='black')
 
     # Choose colormap based on whether the data is categorical or continuous
     if categorical:
         cmap = 'Set1'  # discrete colormap for categories
         if attribute == 'land_use': # Assign colors to each point based on land use (special case)
-            gdf["color"] = gdf[attribute].map(LAND_USE_COLOR_MAPPING).fillna("gray")
+            gdf["color"] = gdf[attribute].map(GLOBALS.LAND_USE_COLOR_MAPPING).fillna("gray")
     else:
         cmap = 'viridis'  # continuous colormap for ranges
 
@@ -63,7 +64,7 @@ def plot_rmqs_with_regions(regions_file, region_col, alias):#show a map with poi
     # color regions by code and show a legend; fall back to a simple grey fill
     #remove regions that do not appear in xlim and ylim
     visible_regions = regions.cx[0e6:1.1e6, 6.0e6:7.25e6]
-    visible_regions.plot(
+    regions.plot(
         ax=ax,
         column=region_col,
         cmap="Pastel1",
@@ -95,13 +96,11 @@ def plot_rmqs_with_regions(regions_file, region_col, alias):#show a map with poi
 
 if __name__ == "__main__":
     data = load_data()
-    plot_rmqs_with_attribute(data, "ph_eau_6_1", "soil_ph", False, None)
+    #plot_rmqs_with_attribute(data, "ph_eau_6_1", "soil_ph", False, None)
+    plot_rmqs_with_regions(GLOBALS.EEA_SHP_BIOREGION_PATH, "code", "bioregion")
+    plot_rmqs_with_regions(GLOBALS.ECOREGIONS_PATH, "ECO_NAME", "ecoregion")
 
-    plot_rmqs_with_regions(EEA_SHP_BIOREGION_PATH, "code", "bioregion")
-    #"C:\\Users\\aburg\\Documents\\analyses\\rmqs_exploration\\data_sm\\wwf_terr_ecos\\wwf_terr_ecos.shp"
-    plot_rmqs_with_regions(ECOREGIONS_PATH, "ECO_NAME", "ecoregion")
-
-DIMENSIONS = [
+"""
     ("signific_ger_95", 'soil_type'),
     ("parent_material", 'parent_material'),
     ("desc_code_occupation3", 'land_use_fine'),
@@ -109,4 +108,4 @@ DIMENSIONS = [
     ("wrb_guess", 'soil_class'),
     ("bioregion", 'bioregion'),
     ("ph_eau_6_1", "soil_ph", False, None)
-]
+"""
