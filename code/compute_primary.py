@@ -59,7 +59,7 @@ def plot_hilda_land_use_with_france():
     }
 
     # Convert the image data to RGB using the color map
-    hilda_rgb = np.zeros((hilda_image.shape[0], hilda_image.shape[1], 3), dtype=np.uint8)
+    hilda_rgb = np.zeros((hilda_image.shape[0], hilda_image.shape[1], 3), dtype=np.uint8) #3D array with 3rd dimension for 3 values of RGB
     for value, color in cmap.items():
         hilda_rgb[hilda_image == value] = np.array(color)
 

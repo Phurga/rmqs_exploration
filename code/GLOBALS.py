@@ -13,6 +13,9 @@ HILDA_LAND_USE_PATH = PROJECT_ROOT / "data_sm/hildap_vGLOB-1.0_geotiff/hildap_vG
 FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/France_shapefile/fr_10km.shp"
 FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/fr.json"
 TAXONOMY_PATH = PROJECT_ROOT / "data_sm/RMQS/16S/rmqs1_16S_otu_taxonomy.tsv"
+ECOREGIONS_PATH = PROJECT_ROOT / "data_sm/wwf_terr_ecoregions/wwf_terr_ecoregions.shp"
+CORINE_PATH = PROJECT_ROOT / "data_sm/CORINE_land_cover/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif"
+
 # results
 OUT_DIR = PROJECT_ROOT / "results"
 DEFAULT_OTU_RICH = OUT_DIR / "otu_richness.csv"
@@ -55,3 +58,8 @@ LAND_USE_INTENSITY_MAPPING = {
         "coniferous forests": 30,   
         "permanent crops": 90
     }
+
+#FRANCE_BOX_EPSG_2154 =  (0e6, 6.0e6, 1.1e6, 7.25e6)  # (minx, miny, maxx, maxy)
+FRANCE_BOX_EPSG_2154 = (-5, 10, 42, 51)
+FRANCE_BOX_EPSG_3035 = (2e6, 2.2e6 , 4.2e6, 3.2e6)
+AQUITAINE_BOX_EPSG_3035 = (3.3e6, 2.2e6 , 3.6e6, 2.7e6)

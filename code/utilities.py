@@ -2,6 +2,33 @@ import pandas as pd
 from pathlib import Path
 from GLOBALS import SAMPLE_DATASET_PATH, FULL_DATASET_PATH, SOIL_METADATA_PATH, SAMPLE_METADATA_PATH, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_RMQS_PATH, SOIL_PROPERTIES_PATH, LAND_USE_INTENSITY_MAPPING
 
+def generate_rmqs_geodataframe(data: pd.DataFrame):
+    """Generate a GeoDataFrame from RMQS data."""
+    from geopandas import GeoDataFrame
+    from shapely.geometry import Point
+    # Determine CRS based on coordinate values
+    if (data['x_theo'].abs().max() <= 180) and (data['y_theo'].abs().max() <= 90):
+        input_crs = "EPSG:4326"  # Lon/Lat
+    else:
+        input_crs = "EPSG:2154"  # Lambert-93
+
+    # Create GeoDataFrame
+    gdf = GeoDataFrame(
+        data,
+        geometry=[Point(x, y) for x, y in zip(data['x_theo'], data['y_theo'])],
+        crs=input_crs,
+    )
+
+    # Convert to EPSG:4326 if necessary
+    if gdf.crs != "EPSG:4326":
+        gdf = gdf.to_crs("EPSG:4326")
+    return gdf
+
+def box_to_france(ax):
+    """Set axis limits to France extent in EPSG:2154"""
+    ax.set_xlim(0e6, 1.1e6)
+    ax.set_ylim(6.0e6, 7.25e6)
+    return ax
 
 def build_land_use_from_desc(meta: pd.DataFrame):
     """
