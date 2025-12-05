@@ -15,10 +15,12 @@ FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/fr.json"
 TAXONOMY_PATH = PROJECT_ROOT / "data_sm/RMQS/16S/rmqs1_16S_otu_taxonomy.tsv"
 # results
 OUT_DIR = PROJECT_ROOT / "results"
-DEFAULT_OTU_RICH = PROJECT_ROOT / "results/otu_richness.csv"
-BIOREGION_RMQS_PATH = PROJECT_ROOT / "results/biogeo_assignment.csv"
-FRANCE_HILDA_LAND_USE_PATH = PROJECT_ROOT / "results/land_use_france.tif"
-LAND_USE_INTENSITY_PATH = PROJECT_ROOT / "results/land_use_intensity.csv"
+DEFAULT_OTU_RICH = OUT_DIR / "otu_richness.csv"
+BIOREGION_RMQS_PATH = OUT_DIR / "biogeo_assignment.csv"
+FRANCE_HILDA_LAND_USE_PATH = OUT_DIR / "land_use_france.tif"
+LAND_USE_INTENSITY_PATH = OUT_DIR / "land_use_intensity.csv"
+FULL_DATASET_PATH = OUT_DIR / "full_dataset.csv"
+SAMPLE_DATASET_PATH = OUT_DIR / "metadata_sample.csv"
 
 
 LAND_USE_SIMPLE_MAPPING = {

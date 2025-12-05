@@ -68,7 +68,7 @@ def main():
     if True:
         otu_taxonomy = read_taxonomy()
         site_otu_table = read_otu_table()
-        site_metadata = load_data()
+        site_metadata = pd.read_csv
         if False:
             import pickle
             with open("./results/temp.pkl", "wb") as f:

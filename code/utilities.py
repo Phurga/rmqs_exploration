@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from GLOBALS import SOIL_METADATA_PATH, SAMPLE_METADATA_PATH, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_RMQS_PATH, SOIL_PROPERTIES_PATH, LAND_USE_INTENSITY_MAPPING
+from GLOBALS import SAMPLE_DATASET_PATH, FULL_DATASET_PATH, SOIL_METADATA_PATH, SAMPLE_METADATA_PATH, DEFAULT_OTU_RICH, LAND_USE_SIMPLE_MAPPING, OUT_DIR, BIOREGION_RMQS_PATH, SOIL_PROPERTIES_PATH, LAND_USE_INTENSITY_MAPPING
 
 
 def build_land_use_from_desc(meta: pd.DataFrame):
@@ -75,7 +75,11 @@ def add_otu(meta_df: pd.DataFrame) -> pd.DataFrame:
         meta_df = meta_df.merge(otu_counts, how="right", left_index=True, right_index=True)
         return meta_df
 
-def load_data(meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = None):
+def load_data(meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = None, skip = True):
+    """ Either loads data from FULL_DATASET_PATH (skip = True) or builds it from raw files."""
+    if skip:
+        return pd.read_csv(FULL_DATASET_PATH, index_col="id_site", encoding="windows-1252")
+
     meta_df = pd.read_csv(meta_path, index_col="id_site", encoding="windows-1252").dropna()
     meta_df.index = meta_df.index.astype(str)
 
@@ -87,7 +91,14 @@ def load_data(meta_path: Path = SAMPLE_METADATA_PATH, filter_columns: list = Non
 
     if filter_columns:
         meta_df = meta_df[filter_columns]
+    
+    with open(SAMPLE_DATASET_PATH, "w") as f:
+        f.write("column_name, type, example_value\n")
+        for col in meta_df.columns:
+            f.write(f"\"{col}\", \"{meta_df[col].dtype}\", \"{meta_df[col].iloc[0]}\"\n")
 
+    with open(FULL_DATASET_PATH, "w") as f:
+        meta_df.to_csv(f)
     return meta_df
 
 
@@ -114,5 +125,5 @@ def add_bioregion(metadata_df: pd.DataFrame) -> pd.DataFrame:
     return metadata_df
 
 if __name__ == "__main__":
-    load_data(filter_columns=["x_theo", "y_theo"])
+    load_data(skip=False)
     
