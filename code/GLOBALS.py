@@ -61,7 +61,6 @@ LAND_USE_INTENSITY_MAPPING = {
         "permanent crops": 90
     }
 
-FRANCE_BOX =  (0e6, 6.0e6, 1.1e6, 7.25e6)  # (minx, miny, maxx, maxy)
-FRANCE_BOX_EPSG_2154 = (-5, 10, 42, 51)
+FRANCE_BOX_EPSG_2154 = (0e6, 6.0e6, 1.1e6, 7.25e6)
 FRANCE_BOX_EPSG_3035 = (2e6, 2.2e6 , 4.2e6, 3.2e6)
 AQUITAINE_BOX_EPSG_3035 = (3.3e6, 2.2e6 , 3.6e6, 2.7e6)

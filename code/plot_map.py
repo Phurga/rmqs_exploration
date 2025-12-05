@@ -59,12 +59,12 @@ def plot_rmqs_with_regions(regions_file, region_col, alias):#show a map with poi
     
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(8,8))
-    ax = box_to_france(ax)
+    ax = box_to_france(ax, crs=regions.crs)
 
     # color regions by code and show a legend; fall back to a simple grey fill
     #remove regions that do not appear in xlim and ylim
-    visible_regions = regions.cx[0e6:1.1e6, 6.0e6:7.25e6]
-    regions.plot(
+    visible_regions = regions.cx[GLOBALS.FRANCE_BOX_EPSG_2154[0]:GLOBALS.FRANCE_BOX_EPSG_2154[2], GLOBALS.FRANCE_BOX_EPSG_2154[1]:GLOBALS.FRANCE_BOX_EPSG_2154[3]]
+    visible_regions.plot(
         ax=ax,
         column=region_col,
         cmap="Pastel1",

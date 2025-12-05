@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import contextily as ctx
 import numpy as np  # Import numpy
 import matplotlib.colors
+from shapely import total_bounds
 
-from utilities import save_fig
+from utilities import save_fig, generate_rmqs_geodataframe, box_to_france
 import GLOBALS
 
 def clip_to_france():
@@ -41,6 +42,7 @@ def clip_to_france():
     return hilda_image, hilda_transform
 
 def plot_hilda_land_use_with_france():
+    """DOES NOT WORK"""
     # Load the raster data
     with rasterio.open(GLOBALS.FRANCE_HILDA_LAND_USE_PATH) as src:
         hilda_image = src.read(1)  # Read the first band
@@ -74,6 +76,20 @@ def plot_hilda_land_use_with_france():
     # Show the plot
     save_fig(fig, "map", "france_hilda_land_use")
 
+def primary_from_corine():
+    rmqs = generate_rmqs_geodataframe()
+    corine = rasterio.open(GLOBALS.CORINE_PATH)
+    #reproject to CRS EPSG:2154
+    if rmqs.crs != corine.crs:
+        rmqs = rmqs.to_crs(corine.crs)
+    window = rasterio.windows.from_bounds(*rmqs.total_bounds, transform=corine.transform)
+    corine_window = corine.read(1, window=window)
+    fig, ax = plt.subplots(figsize=(10,10))
+    ax.imshow(corine_window, extent=rmqs.total_bounds) #ISSUE: both plot do not show as expected, points are not visible, possibly because of extent with negative values
+    rmqs.plot(ax=ax, column="land_use", zorder=2)
+    save_fig(fig, "map", "corine_with_rmqs")
+
 if __name__ == "__main__":
     #hilda_image, hilda_transform = clip_to_france()
-    plot_hilda_land_use_with_france()
+    #plot_hilda_land_use_with_france()
+    primary_from_corine()

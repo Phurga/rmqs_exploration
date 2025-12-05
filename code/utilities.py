@@ -3,26 +3,18 @@ from pathlib import Path
 
 import GLOBALS
 
-def generate_rmqs_geodataframe(data: pd.DataFrame):
-    """Generate a GeoDataFrame from RMQS data."""
+def generate_rmqs_geodataframe():
+    """Generate a GeoDataFrame from RMQS data, whose CRS is RGF93 (EPSG:2154)."""
     from geopandas import GeoDataFrame
     from shapely.geometry import Point
-    # Determine CRS based on coordinate values
-    if (data['x_theo'].abs().max() <= 180) and (data['y_theo'].abs().max() <= 90):
-        input_crs = "EPSG:4326"  # Lon/Lat
-    else:
-        input_crs = "EPSG:2154"  # Lambert-93
 
+    data = load_data()
     # Create GeoDataFrame
     gdf = GeoDataFrame(
         data,
         geometry=[Point(x, y) for x, y in zip(data['x_theo'], data['y_theo'])],
-        crs=input_crs,
+        crs="EPSG:2154", #defined in RMQS1_metadata...csv files
     )
-
-    # Convert to EPSG:4326 if necessary
-    if gdf.crs != "EPSG:4326":
-        gdf = gdf.to_crs("EPSG:4326")
     return gdf
 
 def box_to_france(ax, crs):
@@ -32,9 +24,10 @@ def box_to_france(ax, crs):
             bounds = GLOBALS.FRANCE_BOX_EPSG_2154
         case "EPSG:3035":
             bounds = GLOBALS.FRANCE_BOX_EPSG_3035
-    
-    ax.set_xlim(*bounds[[0, 2]])
-    ax.set_ylim(*bounds[[1, 3]])
+        case "IGNF:ETRS89LAEA":
+            bounds = GLOBALS.FRANCE_BOX_EPSG_3035
+    ax.set_xlim(bounds[0], bounds[2])
+    ax.set_ylim(bounds[1], bounds[3])
     return ax
 
 def build_land_use_from_desc(meta: pd.DataFrame):
