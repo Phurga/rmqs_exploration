@@ -77,15 +77,16 @@ def plot_hilda_land_use_with_france():
     save_fig(fig, "map", "france_hilda_land_use")
 
 def primary_from_corine():
+    """Plot RMQS points over CORINE land use raster."""
     rmqs = generate_rmqs_geodataframe()
     corine = rasterio.open(GLOBALS.CORINE_PATH)
-    #reproject to CRS EPSG:2154
     if rmqs.crs != corine.crs:
         rmqs = rmqs.to_crs(corine.crs)
     window = rasterio.windows.from_bounds(*rmqs.total_bounds, transform=corine.transform)
     corine_window = corine.read(1, window=window)
     fig, ax = plt.subplots(figsize=(10,10))
-    ax.imshow(corine_window, extent=rmqs.total_bounds) #ISSUE: both plot do not show as expected, points are not visible, possibly because of extent with negative values
+    ax = rasterio.plot.show(corine_window, transform=corine.window_transform(window), ax=ax)
+    #ax.imshow(corine_window, extent=rmqs.total_bounds) #ISSUE: both plot do not show as expected, points are not visible, possibly because of extent with negative values-
     rmqs.plot(ax=ax, column="land_use", zorder=2)
     save_fig(fig, "map", "corine_with_rmqs")
 
