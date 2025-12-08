@@ -26,7 +26,7 @@ FULL_DATASET_PATH = OUT_DIR / "full_dataset.csv" #rmqs with all metadata
 SAMPLE_DATASET_PATH = OUT_DIR / "metadata_sample.csv"
 RMQS_BIOREGION_CSV_PATH = OUT_DIR / "bioregion_assignment.csv"
 RMQS_ECOREGION_CSV_PATH = OUT_DIR / "ecoregion_assignment.csv"
-
+CORINE_CLASS_MAPPING_PATH = OUT_DIR / "CORINE_mapping.json"
 
 LAND_USE_SIMPLE_MAPPING = {
     "friches": "urban sites",                                    
