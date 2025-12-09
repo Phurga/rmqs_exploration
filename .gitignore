@@ -3,4 +3,3 @@ results/
 virtual_env/
 code/tests.ipynb
 code/__pycache__/
-gdal_env/

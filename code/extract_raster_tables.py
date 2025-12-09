@@ -1,5 +1,5 @@
 import json
-from osgeo import gdal
+from osgeo import gdal # find gdal package here: https://github.com/cgohlke/geospatial-wheels/releases
 
 import GLOBALS
 

@@ -7,7 +7,6 @@ from utilities import save_fig, generate_rmqs_geodataframe
 import GLOBALS
 
 def primary_from_corine():
-    
     """Plot RMQS points over CORINE land use raster."""
     # Load RMQS and corine bound to france
     rmqs = generate_rmqs_geodataframe()

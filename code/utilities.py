@@ -136,6 +136,19 @@ def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
         return series.where(series.isin(top_values), 'others')
     return series
 
+def relabel_bottom_20pct(series: pd.Series) -> pd.Series:
+    """Relabel values in a column to 'others' if they are in the bottom 20pct of datapoints."""
+    top_values = series.sort_values()/series.sum()
+    bottom_items = top_values.filter(lambda x: x < top_values.quantile(0.2))
+    top_values["others"] = bottom_items.sum()  # Add 'others' category with the sum of bottom items
+    top_values[]
+        
+            
+    while 
+        return series.where(series.isin(top_values), 'others')
+    return series
+
+
 def save_fig(fig, folder, title):
     from matplotlib.pyplot import tight_layout
     tight_layout()

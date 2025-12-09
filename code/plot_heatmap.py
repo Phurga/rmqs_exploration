@@ -16,11 +16,9 @@ def build_pivot(data: pd.DataFrame,
 
 	# Aggregate richness by land use and soil group
 
-    pvt = (
-		data.pivot_table(index=line_field, columns=col_field, values=value_field, aggfunc=func)
-		  .sort_index()
-		  #.reindex(sorted(meta[col_field].unique(), key=lambda x: (x != "Other", x)), axis=1)
-	)
+    pvt = data.pivot_table(index=line_field, columns=col_field, values=value_field, aggfunc=func)
+    #sort by total row values
+    pvt = pvt.sort_index(ascending=False, key=lambda x: pvt.loc[x].sum(), axis=0)  
     return pvt
 
 
@@ -41,9 +39,8 @@ def plot_heatmap(data, value_field, line_field, line_field_alias, col_field, col
 
 if __name__ == "__main__":
     data = load_data()
-    #plot_heatmap(meta, "otu_richness", "land_use", "land_use", "bioregion", "bioregion", top_n=10, agg='median')
     plot_heatmap(data, 
                  value_field="otu_richness", 
-                 line_field="bioregion", line_field_alias="bioregion", 
-                 col_field="land_use", col_field_alias="land_use", 
-                 top_n=20, func='median')
+                 line_field="signific_ger_95", line_field_alias="soil_type", 
+                 col_field="bioregion", col_field_alias="bioregion", 
+                 top_n=10, func='count')
