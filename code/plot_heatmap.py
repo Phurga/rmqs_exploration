@@ -3,30 +3,32 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from utilities import load_data, save_fig, relabel_top_n
+from utilities import load_data, save_fig, relabel_bottom
 
 def build_pivot(data: pd.DataFrame, 
                 value_field: str,
                 line_field: str, 
                 col_field: str,
-                top_n: int,  
                 func: str):
+    try:
+        data[line_field]
+    except KeyError:
+        raise KeyError(f"Column {line_field} not found in data.")
     
-    data[line_field] = relabel_top_n(data[line_field], top_n)
+    data[line_field] = relabel_bottom(data[line_field], cutoff_quantile=0.9)
 
 	# Aggregate richness by land use and soil group
 
     pvt = data.pivot_table(index=line_field, columns=col_field, values=value_field, aggfunc=func)
-    #sort by total row values
-    pvt = pvt.sort_index(ascending=False, key=lambda x: pvt.loc[x].sum(), axis=0)  
+    pvt = pvt.loc[pvt.sum(1).sort_values(ascending=False).index] #sort by total row values
     return pvt
 
 
-def plot_heatmap(data, value_field, line_field, line_field_alias, col_field, col_field_alias, top_n=10, func='median'):
+def plot_heatmap(data, value_field, line_field, line_field_alias, col_field, col_field_alias, func='median'):
     """Plot heatmap of value_field aggregated by line_field and col_field."""
-    pvt = build_pivot(data=data, value_field=value_field, line_field=line_field, col_field=col_field, top_n=top_n, func=func)
-    
-    plt.figure(figsize=(12, 6*top_n/10))
+    pvt = build_pivot(data=data, value_field=value_field, line_field=line_field, col_field=col_field, func=func)
+
+    plt.figure(figsize=(12, 6))
     ax = sns.heatmap(pvt, cmap="viridis", annot=True, fmt=".1f", linewidths=0.5, linecolor="#eeeeee")
     ax.set_xlabel(col_field_alias)
     ax.set_ylabel(line_field_alias)
@@ -43,4 +45,4 @@ if __name__ == "__main__":
                  value_field="otu_richness", 
                  line_field="signific_ger_95", line_field_alias="soil_type", 
                  col_field="bioregion", col_field_alias="bioregion", 
-                 top_n=10, func='count')
+                 func='count')

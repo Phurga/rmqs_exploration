@@ -2,23 +2,23 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
-from utilities import load_data, save_fig, relabel_top_n, generate_rmqs_geodataframe, box_to_france
+from utilities import load_data, save_fig, relabel_bottom, generate_rmqs_geodataframe, box_to_france
 import GLOBALS
 
 FONTSIZE = 24
 
-def plot_rmqs_with_attribute(data, attribute, attribute_alias, categorical=True, top_n = 9) -> None:
+def plot_rmqs_with_attribute(data, attribute, attribute_alias, categorical=True, top_n = 9, background=GLOBALS.FRANCE_BORDERS_PATH, bounds=None) -> None:
     """Plot RMQS sample sites in France colored by a specified attribute."""
     
     # Relabel to 'others' if there are too many categories to display
     if top_n is not None:
-        data[attribute] = relabel_top_n(data[attribute], top_n)
+        data[attribute] = relabel_bottom(data[attribute])
     gdf = generate_rmqs_geodataframe(data)
     
     fig, ax = plt.subplots(figsize=(12, 10))  # Adjusted figure size for legend
-    # Load France geometry and clip to bounds
-    france = gpd.read_file(GLOBALS.FRANCE_BORDERS_PATH).to_crs(gdf.crs)
-    france.plot(ax=ax, kind='geo', color='white', edgecolor='black')
+    # Load background geometry
+    background = gpd.read_file(background).to_crs(gdf.crs)
+    background.plot(ax=ax, kind='geo', color='white', edgecolor='black')
 
     # Choose colormap based on whether the data is categorical or continuous
     if categorical:
@@ -35,6 +35,9 @@ def plot_rmqs_with_attribute(data, attribute, attribute_alias, categorical=True,
     ax.set_title("Sample Sites in France by " + attribute_alias, fontsize=FONTSIZE)
     ax.set_xlabel("Longitude", fontsize=FONTSIZE)
     ax.set_ylabel("Latitude", fontsize=FONTSIZE)
+    if bounds is not None:
+        ax.set_xlim(bounds[0], bounds[1])
+        ax.set_ylim(bounds[2], bounds[3])
 
     # adjust legend text and title font sizes
     if ax.get_legend() is not None:
@@ -51,7 +54,7 @@ def plot_rmqs_with_attribute(data, attribute, attribute_alias, categorical=True,
 
 def plot_rmqs_with_regions(regions_file, region_col, alias):#show a map with points and regions
     """plot rmqs points and regions from a shapefile"""
-    rmqs_pts = generate_rmqs_geodataframe(load_data())
+    rmqs_pts = generate_rmqs_geodataframe()
 
     regions = gpd.read_file(regions_file)[[region_col, "geometry"]]
     if rmqs_pts.crs != regions.crs:
@@ -96,9 +99,13 @@ def plot_rmqs_with_regions(regions_file, region_col, alias):#show a map with poi
 
 if __name__ == "__main__":
     data = load_data()
-    #plot_rmqs_with_attribute(data, "ph_eau_6_1", "soil_ph", False, None)
-    plot_rmqs_with_regions(GLOBALS.EEA_SHP_BIOREGION_PATH, "code", "bioregion")
-    plot_rmqs_with_regions(GLOBALS.ECOREGIONS_PATH, "ECO_NAME", "ecoregion")
+    plot_rmqs_with_attribute(data, "ph_eau_6_1", "soil_ph", False, None)
+    #plot_rmqs_with_regions(GLOBALS.EEA_SHP_BIOREGION_PATH, "code", "bioregion")
+    subdata = data[data["bioregion"].isna()]
+    plot_rmqs_with_attribute(subdata, "ph_eau_6_1", "soil_ph_nobioregion", 
+                             False, None, bounds = [0.8e6,0.9e6,6.2e6,6.3e6],
+                             background=GLOBALS.EEA_SHP_BIOREGION_PATH)
+    #plot_rmqs_with_regions(GLOBALS.ECOREGIONS_PATH, "ECO_NAME", "ecoregion")
 
 """
     ("signific_ger_95", 'soil_type'),

@@ -3,20 +3,6 @@ from pathlib import Path
 
 import GLOBALS
 
-def generate_rmqs_geodataframe():
-    """Generate a GeoDataFrame from RMQS data, whose CRS is RGF93 (EPSG:2154)."""
-    from geopandas import GeoDataFrame
-    from shapely.geometry import Point
-
-    data = load_data()
-    # Create GeoDataFrame
-    gdf = GeoDataFrame(
-        data,
-        geometry=[Point(x, y) for x, y in zip(data['x_theo'], data['y_theo'])],
-        crs="EPSG:2154", #defined in RMQS1_metadata...csv files
-    )
-    return gdf
-
 def box_to_france(ax, crs):
     """Bound a ax to France extent"""
     match crs:
@@ -102,12 +88,19 @@ def add_otu(meta_df: pd.DataFrame) -> pd.DataFrame:
         meta_df = meta_df.merge(otu_counts, how="right", left_index=True, right_index=True)
         return meta_df
 
-def load_data(meta_path: Path = GLOBALS.SAMPLE_METADATA_PATH, filter_columns: list = None, skip = True):
+def load_data(skip = True, out_file = GLOBALS.FULL_DATASET_PATH):
     """ Either loads data from FULL_DATASET_PATH (skip = True) or builds it from raw files."""
     if skip:
-        return pd.read_csv(GLOBALS.FULL_DATASET_PATH, index_col="id_site", encoding="windows-1252")
+        print(f"Reading {out_file}")
+        return pd.read_csv(out_file, index_col="id_site", encoding="windows-1252")
 
-    meta_df = pd.read_csv(meta_path, index_col="id_site", encoding="windows-1252").dropna()
+    from os import remove
+    try:
+        remove(out_file)
+    except FileNotFoundError:
+        pass
+    
+    meta_df = pd.read_csv(GLOBALS.SAMPLE_METADATA_PATH, index_col="id_site", encoding="windows-1252").dropna()
     meta_df.index = meta_df.index.astype(str)
 
     meta_df = add_otu(meta_df)
@@ -116,18 +109,25 @@ def load_data(meta_path: Path = GLOBALS.SAMPLE_METADATA_PATH, filter_columns: li
     meta_df = add_bioregion(meta_df)
     meta_df = add_soil_properties(meta_df)
 
-    if filter_columns:
-        meta_df = meta_df[filter_columns]
-    
-    with open(GLOBALS.SAMPLE_DATASET_PATH, "w") as f:
-        f.write("column_name, type, example_value\n")
-        for col in meta_df.columns:
-            f.write(f"\"{col}\", \"{meta_df[col].dtype}\", \"{meta_df[col].iloc[0]}\"\n")
-
-    with open(GLOBALS.FULL_DATASET_PATH, "w") as f:
+    with open(out_file, "w") as f:
         meta_df.to_csv(f)
+        print(f"Saved csv to: {out_file}")
     return meta_df
 
+
+def generate_rmqs_geodataframe(data = None):
+    """Generate a GeoDataFrame from RMQS data, whose CRS is RGF93 (EPSG:2154)."""
+    from geopandas import GeoDataFrame
+    from shapely.geometry import Point
+    if data is None:
+        data = load_data()
+    # Create GeoDataFrame
+    gdf = GeoDataFrame(
+        data,
+        geometry=[Point(x, y) for x, y in zip(data['x_theo'], data['y_theo'])],
+        crs="EPSG:2154", #defined in RMQS1_metadata...csv files
+    )
+    return gdf
 
 def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
     """Relabel values in a column to 'others' if they are not in the top N."""
@@ -136,18 +136,17 @@ def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
         return series.where(series.isin(top_values), 'others')
     return series
 
-def relabel_bottom_20pct(series: pd.Series) -> pd.Series:
-    """Relabel values in a column to 'others' if they are in the bottom 20pct of datapoints."""
-    top_values = series.sort_values()/series.sum()
-    bottom_items = top_values.filter(lambda x: x < top_values.quantile(0.2))
-    top_values["others"] = bottom_items.sum()  # Add 'others' category with the sum of bottom items
-    top_values[]
-        
-            
-    while 
-        return series.where(series.isin(top_values), 'others')
+def relabel_bottom(series: pd.Series, cutoff_quantile = 0.8, bottom_label = "others", top_n=None) -> pd.Series:
+    """Relabel rare values in a column to 'others' if they are in the bottom quantile of datapoints."""
+    if len(set(series.values)) < 10:
+        return series
+    if top_n is not None:
+        return relabel_top_n(series, top_n)
+    top_values = series.value_counts()/series.count()
+    cumvalues = top_values.cumsum()
+    others = top_values[cumvalues > cutoff_quantile]
+    series[series.isin(others.index)] = bottom_label
     return series
-
 
 def save_fig(fig, folder, title):
     from matplotlib.pyplot import tight_layout
@@ -166,4 +165,3 @@ def add_bioregion(metadata_df: pd.DataFrame) -> pd.DataFrame:
 
 if __name__ == "__main__":
     load_data(skip=False)
-    

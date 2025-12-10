@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
-from utilities import load_data, save_fig, relabel_top_n
+from utilities import load_data, save_fig, relabel_bottom
 
 # globally silence FutureWarning messages
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 def prepare_data(meta_df: pd.DataFrame, group_col: str, value_col: str):
     """Prepares the data for plotting."""
-    meta_df[group_col] = relabel_top_n(meta_df[group_col], top_n=15)
+    meta_df[group_col] = relabel_bottom(meta_df[group_col])
 
     # order categories by median (descending)
     medians = meta_df.groupby(group_col)[value_col].median().sort_values(ascending=False)
