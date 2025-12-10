@@ -138,14 +138,15 @@ def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
 
 def relabel_bottom(series: pd.Series, cutoff_quantile = 0.8, bottom_label = "others", top_n=None) -> pd.Series:
     """Relabel rare values in a column to 'others' if they are in the bottom quantile of datapoints."""
-    if len(set(series.values)) < 10:
-        return series
     if top_n is not None:
         return relabel_top_n(series, top_n)
-    top_values = series.value_counts()/series.count()
+    if len(set(series.values)) < 10:
+        return series
+    top_values = series.value_counts(normalize=True) #value_counts() sorts by decreasing order
     cumvalues = top_values.cumsum()
     others = top_values[cumvalues > cutoff_quantile]
-    series[series.isin(others.index)] = bottom_label
+    series.replace(others.index, bottom_label, inplace=True)
+    print(f"Relabelling {len(others)} values to {bottom_label} in {series.name}.")
     return series
 
 def save_fig(fig, folder, title):
