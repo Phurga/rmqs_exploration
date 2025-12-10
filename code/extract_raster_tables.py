@@ -5,9 +5,9 @@ import GLOBALS
 
 def load_raster_attribute_table(input_raster_path):
     """Load the raster attribute table from a raster file."""
-    raster = gdal.Open(input_raster_path)
-    rat = raster.GetRasterBand(1).GetDefaultRAT()
-    return rat
+    with gdal.Open(input_raster_path) as raster:
+        rat = raster.GetRasterBand(1).GetDefaultRAT()
+        return rat
 
 def extract_raster_table(rat, output_json_path, value_band, label_band):
     """Extract raster attribute table from a raster and save as JSON mapping."""
@@ -17,7 +17,8 @@ def extract_raster_table(rat, output_json_path, value_band, label_band):
         lab = rat.GetValueAsString(r, label_band)
         mapping[int(val)] = lab
     
-    json.dump(mapping, open(output_json_path, "w"))
+    with open(output_json_path, "w") as f:
+        json.dump(mapping, f)
     return mapping
 
 
