@@ -18,6 +18,7 @@ CORINE_PATH = PROJECT_ROOT / "data_sm/CORINE_land_cover/u2018_clc2018_v2020_20u1
 WRB_LVL1_PATH = PROJECT_ROOT / r"data_sm\ESDB-Raster-Library-1k-GeoTIFF-20240507\WRBLV1\WRBLV1.tif"
 WRB_LVL1_MAPPING_PATH = PROJECT_ROOT / r"data_sm\ESDB-Raster-Library-1k-GeoTIFF-20240507\WRBLV1\WRBLV1.vat.dbf"
 WRB_LVL1_NAMES_PATH = PROJECT_ROOT / r"data_sm\ESDB-Raster-Library-1k-GeoTIFF-20240507\WRBLV1\WRBLV1.txt"
+
 # results
 OUT_DIR = PROJECT_ROOT / "results"
 DEFAULT_OTU_RICH = OUT_DIR / "otu_richness.csv"
@@ -30,6 +31,8 @@ RMQS_BIOREGION_CSV_PATH = OUT_DIR / "bioregion_assignment.csv"
 RMQS_ECOREGION_CSV_PATH = OUT_DIR / "ecoregion_assignment.csv"
 CORINE_CLASS_MAPPING_PATH = OUT_DIR / "CORINE_mapping.json"
 WRB_CLASS_RMQS_PATH = OUT_DIR / "wrb_assignment.csv"
+RMQS_CF_PATH = OUT_DIR / "rmqs_cf_sites.csv"
+RMQS_CF_SUMMARY_PATH = OUT_DIR / "rmqs_cf_summary.csv"
 
 LAND_USE_SIMPLE_MAPPING = {
     "friches": "urban sites",                                    

@@ -1,66 +1,59 @@
-import warnings
 import matplotlib as mpl
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
+from blume import table
 
 from utilities import load_data, save_fig, relabel_bottom
 
 # globally silence FutureWarning messages
-warnings.filterwarnings("ignore", category=FutureWarning)
+#import warnings
+#warnings.filterwarnings("ignore", category=FutureWarning)
 
-def plot_violin(ax: plt.Axes, result_df: pd.DataFrame, value_col: str, group_col: str, order: list, color_map: dict):
-    """Plots the violin plot."""
-    sns.violinplot(
-        x=value_col,
-        y=group_col,
-        data=result_df,
-        order=order,
-        inner='quartile',
-        scale="width",
-        width=0.9,
-        linewidth=1.8,
-        cut=0,
-        palette=color_map,
-        ax=ax,
-    )
+#define default parameters for plots
+kwargs_violin = {
+    'inner': 'quartile',
+    'density_norm': 'width',
+    'width': 0.9,
+    'linewidth': 1.8,
+    'cut': 0
+}
 
-def plot_jitter(ax: plt.Axes, result_df: pd.DataFrame, value_col: str, group_col: str, order: list):
-    """Overlays jittered points on the violin plot."""
-    sns.stripplot(
-        x=value_col,
-        y=group_col,
-        data=result_df,
-        order=order,
-        color="k",
-        size=3.6,
-        jitter=0.25,
-        alpha=0.55,
-        ax=ax,
-    )
+kwargs_jitter = {
+    "color":"k",
+    "size":3.6,
+    "jitter":0.25,
+    "alpha":0.55
+}
 
-def plot_distribution(data: pd.DataFrame, value: str, attribute: str, alias: str = None):
-    """Plots the distribution and median of a specified value column by a grouping column."""
+def plot_distribution(data: pd.DataFrame, value: str, 
+                      attribute: str, alias: str = None):
+    """Plots the distribution and median of a specified value column by a grouping attribute."""
     if alias is None: alias = attribute
+    data[attribute] = relabel_bottom(data[attribute], approach='n_cats', top_n=8) #reduce size for plotting
 
     # order categories by median
-    medians = data.groupby(attribute)[value].median().sort_values(ascending=False)
-    sorted_groups = medians.index.tolist()
+    statistics = ['median', 'count']
+    data_summary = data.pivot_table(values=value,index=attribute,aggfunc=statistics)
+    data_summary = data_summary.sort_values((statistics[0], value), ascending=False)
 
     # figure portrait
-    fig_h = max(8, 0.35 * len(sorted_groups))
+    fig_h = max(8, 0.35 * len(data_summary))
     fig, ax = plt.subplots(figsize=(8, fig_h))
-    plot_violin(ax, data, value, attribute, sorted_groups, None)
-    plot_jitter(ax, data, value, attribute, sorted_groups)
+    sns.violinplot(data = data, x = value, y = attribute, order = data_summary.index,
+                   ax = ax, **kwargs_violin)
+    sns.stripplot(data=data, x=value, y=attribute, order=data_summary.index, 
+                  ax=ax, **kwargs_jitter)
 
     # set y labels and formatting
-    ax.set_title(f"Distribution and median of {value} by {alias}")
+    ax.set_title(f"Distribution and median of {value} by {attribute} ({alias})")
 
     if data[value].min() > 100:
         ax.xaxis.set_major_formatter(FuncFormatter(lambda x: f"{x:,.0f}".replace(",", "'")))
-
-    save_fig(fig, "distribution", f"{value}_by_{alias}")
+    ax.set_yticklabels([f"{i}\n {statistics[0]}: {val[0]:.2f}, {statistics[1]}: {val[1]:.0f}" 
+                         for i, val in data_summary.iterrows()])
+    save_fig(fig, "distribution", f"{value}_by_{attribute}_{alias}")
     return fig
 
 

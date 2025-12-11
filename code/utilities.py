@@ -81,7 +81,6 @@ def add_soil_properties(data: pd.DataFrame) -> pd.DataFrame:
     data = data.merge(soil_props, left_index=True, right_index=True, how="left")
     return data
 
-
 def add_otu(data: pd.DataFrame) -> pd.DataFrame:
         otu_counts = pd.read_csv(GLOBALS.DEFAULT_OTU_RICH, sep=";", index_col="id_site", encoding="windows-1252")
         otu_counts.index = otu_counts.index.astype(str)
@@ -112,14 +111,13 @@ def load_data(skip = True, out_file = GLOBALS.FULL_DATASET_PATH):
     data = add_otu(data)
     data = build_land_use_from_desc(data)
     data = add_soil_metadata(data)
-    data = add_from_csv(data, GLOBALS.RMQS_BIOREGION_CSV_PATH) #add bioregion
+    data = add_from_csv(data, GLOBALS.RMQS_BIOREGION_CSV_PATH) # add bioregion
     data = add_soil_properties(data)
     data = generate_rmqs_geodataframe(data)
-    data = add_from_csv(data, GLOBALS.WRB_CLASS_RMQS_PATH) #add wrb lvl 1 class
+    data = add_from_csv(data, GLOBALS.WRB_CLASS_RMQS_PATH) # add wrb lvl 1 class
+    data = add_from_csv(data, GLOBALS.RMQS_CF_PATH) # add cf
 
-    with open(out_file, "w") as f:
-        data.to_csv(f)
-        print(f"Saved csv to: {out_file}")
+    write_csv(data, GLOBALS.FULL_DATASET_PATH)
     return data
 
 
@@ -136,10 +134,6 @@ def generate_rmqs_geodataframe(data = None):
         crs="EPSG:2154" #defined in RMQS1_metadata...csv files
     )
     return gdf
-
-def relabel_top_n(series: pd.Series, top_n: int) -> pd.Series:
-    """Relabel values in a column to 'others' if they are not in the top N most populous."""
-
 
 def relabel_bottom(series: pd.Series, approach = "quantile", cutoff_quantile = 0.8, bottom_label = "Others", top_n=None, val_count = None) -> pd.Series:
     """
@@ -167,6 +161,10 @@ def relabel_bottom(series: pd.Series, approach = "quantile", cutoff_quantile = 0
     series.replace(to_replace=others, value=bottom_label, inplace=True)
     return series
 
+def write_csv(df: pd.DataFrame, outfile):
+    print(f"Writing {outfile}")
+    df.to_csv(outfile)
+
 def save_fig(fig, folder, title):
     from matplotlib.pyplot import tight_layout
     tight_layout()
@@ -176,16 +174,15 @@ def save_fig(fig, folder, title):
     print(f"Saved figure to: {out_path}")
     return None
 
-import rasterio
-import rasterio.plot
-import geopandas
-
 def check_crs(item1, item2):
     """items can be rasters or geodataframes, .crs works the same"""
     if item1.crs != item2.crs: 
         raise ValueError("Combination of geographical elements with different crs.")
     return None
-    
+
+import rasterio
+import rasterio.plot
+import geopandas
 
 def plot_geodf_on_raster(raster: rasterio.io.DatasetReader,
                          geodf: geopandas.geodataframe.GeoDataFrame,
