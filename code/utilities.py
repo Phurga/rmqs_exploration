@@ -142,11 +142,12 @@ def relabel_bottom(series: pd.Series, approach = "quantile", cutoff_quantile = 0
     - 'n_cats' keeps only the "top_n" most populous values based on value counts
     - 'val_count' keeps only values appearing more than val_count times in the series.
     """
+    if approach not in ['quantile', 'n_cats', 'val_counts']: raise ValueError("approach has an invalid value.")
     if len(set(series.values)) < 10:
         print(f"Relabelling {series.name} was skipped since series has less than 10 categories")
         return series
     match approach:
-        case "cat_num":
+        case "n_cats":
             if top_n is not None and series.nunique() > top_n:
                 top_values = series.value_counts().nlargest(top_n).index
                 return series.where(series.isin(top_values), 'others')

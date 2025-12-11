@@ -35,24 +35,33 @@ def plot_distribution(data: pd.DataFrame, value: str,
 
     # order categories by median
     statistics = ['median', 'count']
-    data_summary = data.pivot_table(values=value,index=attribute,aggfunc=statistics)
+    data_summary = data.pivot_table(values=value,index=[attribute,"land_use"],aggfunc=statistics)
     data_summary = data_summary.sort_values((statistics[0], value), ascending=False)
+
+    attribute_summary = data.pivot_table(values=value,index=attribute,aggfunc=statistics)
+    attribute_summary = attribute_summary.sort_values((statistics[1], value), ascending=False)
 
     # figure portrait
     fig_h = max(8, 0.35 * len(data_summary))
     fig, ax = plt.subplots(figsize=(8, fig_h))
-    sns.violinplot(data = data, x = value, y = attribute, order = data_summary.index,
-                   ax = ax, **kwargs_violin)
-    sns.stripplot(data=data, x=value, y=attribute, order=data_summary.index, 
-                  ax=ax, **kwargs_jitter)
+    land_use_order = ['broadleaved forests',
+                 'coniferous forests',
+                 'meadows',
+                 'annual crops',
+                 'permanent crops']
+    ax.axvline(x=1, color='k', linestyle='-', zorder=0)
+    sns.violinplot(data = data, x = value, y = attribute, order=attribute_summary.index,
+                   ax = ax, **kwargs_violin, hue="land_use", hue_order=land_use_order)
+    #sns.stripplot(data=data, x=value, y=attribute, order=data_summary.index, 
+     #             ax=ax, **kwargs_jitter)
 
     # set y labels and formatting
     ax.set_title(f"Distribution and median of {value} by {attribute} ({alias})")
 
     if data[value].min() > 100:
         ax.xaxis.set_major_formatter(FuncFormatter(lambda x: f"{x:,.0f}".replace(",", "'")))
-    ax.set_yticklabels([f"{i}\n {statistics[0]}: {val[0]:.2f}, {statistics[1]}: {val[1]:.0f}" 
-                         for i, val in data_summary.iterrows()])
+    ax.set_yticklabels([f"{i}\n{statistics[1]}: {val[1]:.0f}" 
+                         for i, val in attribute_summary.iterrows()])
     save_fig(fig, "distribution", f"{value}_by_{attribute}_{alias}")
     return fig
 
