@@ -149,7 +149,7 @@ def relabel_bottom(series: pd.Series, approach = "quantile", cutoff_quantile = 0
     - 'val_count' keeps only values appearing more than val_count times in the series.
     """
     if len(set(series.values)) < 10:
-        print("Relabelling was skipped since series has less than 10 categories")
+        print(f"Relabelling {series.name} was skipped since series has less than 10 categories")
         return series
     match approach:
         case "cat_num":
