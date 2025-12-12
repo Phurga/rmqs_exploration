@@ -1,13 +1,12 @@
 from utilities import (
-    save_fig, generate_rmqs_geodataframe, 
-    plot_geodf_on_raster, sample_raster_to_geodataframe,
+    load_data, plot_geodf_on_raster, sample_raster_to_geodataframe,
     relabel_bottom)
 import rasterio
 import GLOBALS
 import geopandas as gpd 
 import pandas as pd
 
-def get_WRB_mapping():
+def get_WRB_numeric_to_text_mapping():
         """
         Read the WRB text file and return a dict mapping code to name.
         Lines that do not contain a code name pair are ignored.
@@ -33,30 +32,39 @@ def get_WRB_mapping():
             if len(value) < 3 
             else nan 
             for key, value in WRB_number_to_code.items()}
+        # storing the mapping in disk
+        with open(GLOBALS.WRB_FINAL_MAPPING_PATH, "w") as f:
+            print(f"Writing {GLOBALS.WRB_FINAL_MAPPING_PATH}")
+            from json import dump
+            dump(WRB_number_to_txt, f)
         return WRB_number_to_txt
 
-def compute_WRB_class():
-    rmqs = generate_rmqs_geodataframe()
+def compute_WRB_class(data: gpd.GeoDataFrame):
+    """
+    Docstring for compute_WRB_class
+    
+    :param data: Description
+    """
+    #extract raster values to rmqs
+    WRB_col_name = 'WRB_LVL1'
     with rasterio.open(GLOBALS.WRB_LVL1_PATH) as wrb: #EPSG3035
-        rmqs = rmqs.to_crs(wrb.crs)
-        plot_geodf_on_raster(wrb, rmqs, "wrb_rmqs")
-        
-        rmqs['WRB_LVL1'] = sample_raster_to_geodataframe(rmqs, wrb)
-        
-        wrb_mapping = get_WRB_mapping()
-        with open("results/WRB_mapping.json", "w") as f:
-            print("Writing results/WRB_mapping.json")
-            from json import dump
-            dump(wrb_mapping, f)
-        rmqs['WRB_LVL1'] = rmqs['WRB_LVL1'].map(wrb_mapping)
-        rmqs["WRB_LVL1"] = relabel_bottom(rmqs["WRB_LVL1"], cutoff_quantile=0.97) #quantile defined to cutoff after Podzol (see below)
-        with open(GLOBALS.WRB_CLASS_RMQS_PATH, "w") as f:
-            print(f"Writing {GLOBALS.WRB_CLASS_RMQS_PATH}")
-            rmqs["WRB_LVL1"].to_csv(f) 
-    return rmqs
+        data = data.to_crs(wrb.crs)
+        plot_geodf_on_raster(wrb, data, "wrb_rmqs")
+        data[WRB_col_name] = sample_raster_to_geodataframe(data, wrb)
+
+    # convert raster numeric values to text classes
+    wrb_mapping = get_WRB_numeric_to_text_mapping()
+    data[WRB_col_name] = data[WRB_col_name].map(wrb_mapping)
+    data[WRB_col_name] = relabel_bottom(data["WRB_LVL1"], approach='min_val_count', param=50) #group all soil types together if there are less than 50 sampled points
+
+    with open(GLOBALS.RMQS_WRB_PATH, "w") as f:
+        print(f"Writing {GLOBALS.RMQS_WRB_PATH}")
+        data[WRB_col_name].to_csv(f)
+    return data
 
 if __name__ == '__main__':
-    compute_WRB_class()
+    data = load_data()
+    compute_WRB_class(data)
 
 """
 >>> print(rmqs['WRB_LVL1'].value_counts().cumsum())

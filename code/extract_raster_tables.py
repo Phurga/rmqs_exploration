@@ -42,7 +42,7 @@ def print_raster_table(rat):
     return None
 
 if __name__ == "__main__":
-    rat = load_raster_attribute_table(GLOBALS.CORINE_PATH)
+    rat = load_raster_attribute_table(GLOBALS.CORINE_LANDUSE_PATH)
     print_raster_table(rat)
     extract_raster_table(
         rat=rat,

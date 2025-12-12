@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from utilities import load_data, save_fig, relabel_bottom
+from utilities import save_fig, relabel_bottom, load_data
 
 def build_pivot(data: pd.DataFrame, 
                 value_field: str,

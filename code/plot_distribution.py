@@ -1,11 +1,10 @@
-import matplotlib as mpl
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 from blume import table
 
-from utilities import load_data, save_fig, relabel_bottom
+from utilities import save_fig, relabel_bottom, load_data
 
 # globally silence FutureWarning messages
 #import warnings
@@ -21,17 +20,30 @@ kwargs_violin = {
 }
 
 kwargs_jitter = {
-    "color":"k",
+    "palette":"dark:k",
     "size":3.6,
     "jitter":0.25,
     "alpha":0.55
 }
 
-def plot_distribution(data: pd.DataFrame, value: str, 
-                      attribute: str, alias: str = None):
+def plot_land_use_distribution(
+        data: pd.DataFrame, 
+        value: str, attribute: str, alias: str = None,
+        relabel_approach = None,
+        relabel_param = None
+        ) -> plt.Figure:
     """Plots the distribution and median of a specified value column by a grouping attribute."""
     if alias is None: alias = attribute
-    data[attribute] = relabel_bottom(data[attribute], approach='n_cats', top_n=8) #reduce size for plotting
+    # temporarily remove uninteresting land use classes and tidy data
+    data[attribute] = relabel_bottom(data[attribute], approach=relabel_approach, param=relabel_param)
+    data = data[data["land_use"].isin(['natural sites', 'urban sites']) == False]
+    land_use_order = [
+        'broadleaved forests',
+        'coniferous forests',
+        'meadows',
+        'annual crops',
+        'permanent crops']
+    data[attribute] = relabel_bottom(data[attribute], approach='top_cats', param=20) #reduce size for plotting
 
     # order categories by median
     statistics = ['median', 'count']
@@ -44,31 +56,26 @@ def plot_distribution(data: pd.DataFrame, value: str,
     # figure portrait
     fig_h = max(8, 0.35 * len(data_summary))
     fig, ax = plt.subplots(figsize=(8, fig_h))
-    land_use_order = ['broadleaved forests',
-                 'coniferous forests',
-                 'meadows',
-                 'annual crops',
-                 'permanent crops']
     ax.axvline(x=1, color='k', linestyle='-', zorder=0)
     sns.violinplot(data = data, x = value, y = attribute, order=attribute_summary.index,
                    ax = ax, **kwargs_violin, hue="land_use", hue_order=land_use_order)
-    #sns.stripplot(data=data, x=value, y=attribute, order=data_summary.index, 
-     #             ax=ax, **kwargs_jitter)
 
     # set y labels and formatting
     ax.set_title(f"Distribution and median of {value} by {attribute} ({alias})")
 
     if data[value].min() > 100:
         ax.xaxis.set_major_formatter(FuncFormatter(lambda x: f"{x:,.0f}".replace(",", "'")))
-    ax.set_yticklabels([f"{i}\n{statistics[1]}: {val[1]:.0f}" 
-                         for i, val in attribute_summary.iterrows()])
+    # build y tick labels with counts and set matching tick positions to avoid FixedFormatter warnings
+    yticklabels = [f"{i}\n{statistics[1]}: {val.iloc[1]:.0f}" for i, val in attribute_summary.iterrows()]
+    ax.set_yticks(range(len(yticklabels)))
+    ax.set_yticklabels(yticklabels)
     save_fig(fig, "distribution", f"{value}_by_{attribute}_{alias}")
     return fig
 
 
 if __name__ == "__main__":
     meta_df = load_data()
-    plot_distribution(meta_df, "otu_richness", "bioregion", 'bioregion')
+    plot_land_use_distribution(meta_df, "otu_richness", "bioregion", 'bioregion')
 
 """
 "signific_ger_95", 'soil type'

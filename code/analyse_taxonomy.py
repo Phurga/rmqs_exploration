@@ -1,7 +1,7 @@
 import pandas as pd
 
-from compute_otu_metrics import read_otu_table, read_taxonomy
-from utilities import load_data, save_fig
+from compute_otu_metrics import read_taxonomy, read_otu_table
+from utilities import save_fig
 import GLOBALS
 
 def build_level_site_table(otu_taxonomy: pd.DataFrame, site_otu_table: pd.DataFrame, level: str) -> pd.DataFrame:
@@ -64,6 +64,9 @@ def plot_level_land_use_table(level_land_use_table, level, site_metadata, level_
     return None
 
 def main():
+    """
+    Generates plots to study the variability of bacteria at different taxonomic levels (see ./results/taxonomy)
+    """
     if True:
         otu_taxonomy = read_taxonomy()
         site_otu_table = read_otu_table()

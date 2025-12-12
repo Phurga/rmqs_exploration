@@ -2,34 +2,35 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
-from utilities import load_data, save_fig, relabel_bottom, generate_rmqs_geodataframe, box_to_france
+from utilities import save_fig, relabel_bottom, box_to_france, load_data
 import GLOBALS
 
 FONTSIZE = 24
 
-def plot_rmqs_with_attribute(data, attribute, attribute_alias, categorical=True, top_n = 9, background=GLOBALS.FRANCE_BORDERS_PATH, bounds=None) -> None:
+def plot_rmqs_with_attribute(data : gpd.GeoDataFrame, attribute: str, attribute_alias: str = None, categorical : bool =True, top_n = 9, background=GLOBALS.FRANCE_BORDERS_PATH, bounds=None) -> None:
     """Plot RMQS sample sites in France colored by a specified attribute."""
     
+    if attribute_alias is None:
+        attribute_alias = attribute
     # Relabel to 'others' if there are too many categories to display
     if top_n is not None:
-        data[attribute] = relabel_bottom(data[attribute])
-    gdf = generate_rmqs_geodataframe(data)
+        data[attribute] = relabel_bottom(data[attribute], approach='top_cats', param=top_n)
     
     fig, ax = plt.subplots(figsize=(12, 10))  # Adjusted figure size for legend
     # Load background geometry
-    background = gpd.read_file(background).to_crs(gdf.crs)
+    background = gpd.read_file(background).to_crs(data.crs)
     background.plot(ax=ax, kind='geo', color='white', edgecolor='black')
 
     # Choose colormap based on whether the data is categorical or continuous
     if categorical:
         cmap = 'Set1'  # discrete colormap for categories
         if attribute == 'land_use': # Assign colors to each point based on land use (special case)
-            gdf["color"] = gdf[attribute].map(GLOBALS.LAND_USE_COLOR_MAPPING).fillna("gray")
+            data["color"] = data[attribute].map(GLOBALS.LAND_USE_COLOR_MAPPING).fillna("gray")
     else:
         cmap = 'viridis'  # continuous colormap for ranges
 
     
-    gdf.plot(ax=ax, kind='geo', column=attribute, cmap=cmap, legend=True, markersize=30, categorical=categorical, marker='o', legend_kwds={'label': attribute_alias})
+    data.plot(ax=ax, kind='geo', column=attribute, cmap=cmap, legend=True, markersize=30, categorical=categorical, marker='o')
 
     # set title and axis labels using FS
     ax.set_title("Sample Sites in France by " + attribute_alias, fontsize=FONTSIZE)
@@ -52,13 +53,12 @@ def plot_rmqs_with_attribute(data, attribute, attribute_alias, categorical=True,
     save_fig(fig, "map", f"france_{attribute_alias}")
     return fig
 
-def plot_rmqs_with_regions(regions_file, region_col, alias):#show a map with points and regions
+def plot_rmqs_with_regions(data: gpd.GeoDataFrame, regions_file, region_col, alias):#show a map with points and regions
     """plot rmqs points and regions from a shapefile"""
-    rmqs_pts = generate_rmqs_geodataframe()
 
     regions = gpd.read_file(regions_file)[[region_col, "geometry"]]
-    if rmqs_pts.crs != regions.crs:
-        regions = regions.to_crs(rmqs_pts.crs)
+    if data.crs != regions.crs:
+        regions = regions.to_crs(data.crs)
     
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(8,8))
@@ -79,7 +79,7 @@ def plot_rmqs_with_regions(regions_file, region_col, alias):#show a map with poi
     fig.gca().add_artist(ax.get_legend()) #manually adding the first legend as an artist to avoid it being overwritten by the second
 
     # plot points on top, color-coded by 'land_use' when available
-    rmqs_pts.plot(
+    data.plot(
         ax=ax,
         column="land_use",
         categorical=True,
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     subdata = data[data["bioregion"].isna()]
     plot_rmqs_with_attribute(subdata, "ph_eau_6_1", "soil_ph_nobioregion", 
                              False, None, bounds = [0.8e6,0.9e6,6.2e6,6.3e6],
-                             background=GLOBALS.EEA_SHP_BIOREGION_PATH)
+                             background=GLOBALS.EEA_BIOREGION_BORDERS_PATH)
     #plot_rmqs_with_regions(GLOBALS.ECOREGIONS_PATH, "ECO_NAME", "ecoregion")
 
 """
