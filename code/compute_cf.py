@@ -1,4 +1,4 @@
-from utilities import write_csv, load_data
+import utilities
 import GLOBALS
 
 import pandas as pd
@@ -62,8 +62,8 @@ def compute_land_use_cf_median_context(
     
     # write results in disk and return
     results_cols = [f"reference_median_{indicator}", f"relative_{indicator}", "cf"]
-    write_csv(data[results_cols], GLOBALS.RMQS_CF_PATH)
-    write_csv(median_cf_context, GLOBALS.RMQS_CF_SUMMARY_PATH)
+    utilities.write_csv(data[results_cols], GLOBALS.RMQS_CF_PATH)
+    utilities.write_csv(median_cf_context, GLOBALS.RMQS_CF_SUMMARY_PATH)
 
     # plot distribution of cf values
     from plot_distribution import plot_land_use_distribution
@@ -74,5 +74,5 @@ def compute_land_use_cf_median_context(
 
 if __name__ == "__main__":
     indicator = "otu_richness"
-    data = load_data()
+    data = utilities.load_rmqs_data()
     compute_land_use_cf_median_context(data)

@@ -2,9 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
-from blume import table
 
-from utilities import save_fig, relabel_bottom, load_data
+from utilities import save_fig, relabel_bottom, load_rmqs_data
 
 # globally silence FutureWarning messages
 #import warnings
@@ -74,7 +73,7 @@ def plot_land_use_distribution(
 
 
 if __name__ == "__main__":
-    meta_df = load_data()
+    meta_df = load_rmqs_data()
     plot_land_use_distribution(meta_df, "otu_richness", "bioregion", 'bioregion')
 
 """

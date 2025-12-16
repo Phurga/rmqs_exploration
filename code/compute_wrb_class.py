@@ -1,10 +1,10 @@
-from utilities import (
-    load_data, plot_geodf_on_raster, sample_raster_to_geodataframe,
-    relabel_bottom)
 import rasterio
-import GLOBALS
 import geopandas as gpd 
 import pandas as pd
+
+import utilities
+import geo_utilities
+import GLOBALS
 
 def get_WRB_numeric_to_text_mapping():
         """
@@ -45,17 +45,16 @@ def compute_WRB_class(data: gpd.GeoDataFrame):
     
     :param data: Description
     """
-    #extract raster values to rmqs
     WRB_col_name = 'WRB_LVL1'
     with rasterio.open(GLOBALS.WRB_LVL1_PATH) as wrb: #EPSG3035
-        data = data.to_crs(wrb.crs)
-        plot_geodf_on_raster(wrb, data, "wrb_rmqs")
-        data[WRB_col_name] = sample_raster_to_geodataframe(data, wrb)
+        data = data.to_crs(wrb.crs) #reproject the points rather than the raster because reprojecting raster is tricky
+        geo_utilities.plot_geodataframe_on_raster(wrb, data, "wrb_rmqs")
+        data[WRB_col_name] = geo_utilities.sample_raster_to_geodataframe(data, wrb)
 
     # convert raster numeric values to text classes
     wrb_mapping = get_WRB_numeric_to_text_mapping()
     data[WRB_col_name] = data[WRB_col_name].map(wrb_mapping)
-    data[WRB_col_name] = relabel_bottom(data["WRB_LVL1"], approach='min_val_count', param=50) #group all soil types together if there are less than 50 sampled points
+    data[WRB_col_name] = utilities.relabel_bottom(data["WRB_LVL1"], approach='min_val_count', param=50) #group all soil types together if there are less than 50 sampled points
 
     with open(GLOBALS.RMQS_WRB_PATH, "w") as f:
         print(f"Writing {GLOBALS.RMQS_WRB_PATH}")
@@ -63,7 +62,7 @@ def compute_WRB_class(data: gpd.GeoDataFrame):
     return data
 
 if __name__ == '__main__':
-    data = load_data()
+    data = utilities.load_rmqs_data()
     compute_WRB_class(data)
 
 """

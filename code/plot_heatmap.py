@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from utilities import save_fig, relabel_bottom, load_data
+from utilities import save_fig, relabel_bottom, load_rmqs_data
 
 def build_pivot(data: pd.DataFrame, 
                 value_field: str,
@@ -40,7 +40,7 @@ def plot_heatmap(data, value_field, line_field, line_field_alias, col_field, col
 
 
 if __name__ == "__main__":
-    data = load_data()
+    data = load_rmqs_data()
     plot_heatmap(data, 
                  value_field="otu_richness", 
                  line_field="signific_ger_95", line_field_alias="soil_type", 

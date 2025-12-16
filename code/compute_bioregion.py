@@ -3,7 +3,7 @@ import pandas as pd
 import geopandas as gpd
 
 import GLOBALS
-from utilities import load_data
+from utilities import load_rmqs_data
 
 def add_region_to_rmqs(
     rmqs_gdf: gpd.GeoDataFrame,
@@ -36,6 +36,6 @@ def compute_bioregion(data):
     return data
 
 if __name__ == "__main__":
-    data = load_data()
+    data = load_rmqs_data()
     add_region_to_rmqs(data, GLOBALS.EEA_BIOREGION_BORDERS_PATH, shp_col="code", region_name="bioregion", out_file = GLOBALS.RMQS_BIOREGION_CSV_PATH)
     add_region_to_rmqs(data, GLOBALS.WWF_ECOREGIONS_BORDERS_PATH, shp_col="ECO_NAME", region_name="ecoregion", out_file = GLOBALS.RMQS_ECOREGION_CSV_PATH)

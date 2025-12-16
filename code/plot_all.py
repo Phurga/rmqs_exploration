@@ -1,17 +1,18 @@
-from utilities import load_data
+from utilities import load_rmqs_data
 from plot_distribution import plot_land_use_distribution
 from plot_map import plot_rmqs_with_attribute
 from plot_heatmap import plot_heatmap
 from plot_map import plot_rmqs_with_regions
 import GLOBALS
 
-data = load_data()
+data = load_rmqs_data()
 
 plot_land_use_distribution(data, "otu_richness", "land_use", 'land_use')
 plot_land_use_distribution(data, "otu_richness", "parent_material", 'parent_material')
 plot_land_use_distribution(data, "otu_richness", "wrb_guess", 'wrb_class')
 plot_land_use_distribution(data, "otu_richness", "signific_ger_95", 'soil_type')
 plot_land_use_distribution(data, "otu_richness", "desc_code_occupation3", 'land_use_fine')
+plot_land_use_distribution(data, "cf", "context", "context", relabel_approach="top_n", param=10)
 
 plot_rmqs_with_attribute(data, "land_use", 'land_use')
 plot_rmqs_with_attribute(data, "parent_material", 'parent_material')

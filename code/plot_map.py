@@ -2,7 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
-from utilities import save_fig, relabel_bottom, box_to_france, load_data
+from utilities import save_fig, relabel_bottom, box_to_france, load_rmqs_data
 import GLOBALS
 
 FONTSIZE = 24
@@ -98,7 +98,7 @@ def plot_rmqs_with_regions(data: gpd.GeoDataFrame, regions_file, region_col, ali
     return None
 
 if __name__ == "__main__":
-    data = load_data()
+    data = load_rmqs_data()
     plot_rmqs_with_attribute(data, "ph_eau_6_1", "soil_ph", False, None)
     #plot_rmqs_with_regions(GLOBALS.EEA_SHP_BIOREGION_PATH, "code", "bioregion")
     subdata = data[data["bioregion"].isna()]
