@@ -48,6 +48,7 @@ def get_france_corine_stats():
     :type data: DataFrame
     """
     france_borders = gpd.read_file(GLOBALS.FRANCE_BORDERS_PATH)
+    france_geometry = france_borders['geometry']
     with rasterio.open(GLOBALS.CORINE_LANDUSE_PATH, 'r') as corine:
         france_borders.to_crs(corine.crs, inplace=True)
         france_window = rwindows.from_bounds(*france_borders.total_bounds, transform=corine.transform)
@@ -56,17 +57,18 @@ def get_france_corine_stats():
             indexes=1,
             window=france_window)
         
-    stats = rasterstats.gen_zonal_stats(
-        vectors=france_borders.geometry,
+    stats = rasterstats.zonal_stats(
+        vectors=france_geometry,
         raster=rastervalues,
         affine=france_transform,
         categorical=True,
         stats='count')
         
     return stats
+        
 
 
 if __name__ == "__main__":
     #data = load_rmqs_data()
     #compute_primary_from_corine(data)
-    get_france_corine_stats()
+    print(get_france_corine_stats())

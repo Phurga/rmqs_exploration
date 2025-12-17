@@ -3,6 +3,7 @@ from pathlib import Path
 #Global variables
 ENCODING_RMQS = 'windows-1252'
 CRS_RMQS = "EPSG:2154"
+CRS_EEA_BIOREGION = "EPSG:3035"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,7 +16,7 @@ WORLD_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/world.geojson"
 EEA_BIOREGION_BORDERS_PATH = PROJECT_ROOT / "data_sm/eea2016_biogeographical_regions/eea_v_3035_1_mio_biogeo-regions_p_2016_v01_r00/BiogeoRegions2016.shp"
 HILDA_LAND_USE_PATH = PROJECT_ROOT / "data_sm/hildap_vGLOB-1.0_geotiff/hildap_vGLOB-1.0_geotiff_wgs84/hildap_GLOB-v1.0_lulc-states/hilda_plus_2009_states_GLOB-v1-0_wgs84-nn.tif"
 #FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/France_shapefile/fr_10km.shp"
-FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/fr.json"
+FRANCE_BORDERS_PATH = PROJECT_ROOT / "data_sm/geopandas_world/fr.geojson"
 RMQS_TAXONOMY_PATH = PROJECT_ROOT / "data_sm/RMQS/16S/rmqs1_16S_otu_taxonomy.tsv"
 WWF_ECOREGIONS_BORDERS_PATH = PROJECT_ROOT / "data_sm/wwf_terr_ecos/wwf_terr_ecos.shp"
 CORINE_LANDUSE_PATH = PROJECT_ROOT / "data_sm/CORINE_land_cover/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif" #https://land.copernicus.eu/en/products/corine-land-cover/clc2018#download
@@ -26,6 +27,8 @@ WRB_LVL1_NAMES_PATH = PROJECT_ROOT / r"data_sm\ESDB-Raster-Library-1k-GeoTIFF-20
 # results
 OUT_DIR = PROJECT_ROOT / "results"
 
+CORINE_FRANCE_PATH = OUT_DIR / "rasters" /"CORINE_france.tif"
+WRB_LV1_FRANCE_PATH = OUT_DIR / "rasters" / "WRB_LV1_france.tif"
 RMQS_OTU_STATS = OUT_DIR / "otu_metrics.csv"
 BIOREGION_RMQS_PATH = OUT_DIR / "biogeo_assignment.csv"
 FRANCE_HILDA_LAND_USE_PATH = OUT_DIR / "land_use_france.tif"
