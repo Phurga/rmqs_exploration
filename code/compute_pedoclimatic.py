@@ -37,11 +37,12 @@ def compute_pedoclimatic_mix_france() -> pd.DataFrame:
     pedoclimatic_data = pd.DataFrame(pedoclimatic_data, columns=['climate', 'soil_class', 'pixel_count']).set_index(['climate', 'soil_class'])
     pedoclimatic_data['relative_pixel_count'] = pedoclimatic_data['pixel_count'] / pedoclimatic_data['pixel_count'].sum()
     pedoclimatic_data.sort_values(by='relative_pixel_count', ascending=False, inplace=True)
+    pedoclimatic_data["cumulative_area_pct"] = pedoclimatic_data['relative_pixel_count'].cumsum()
 
     # write in disk
     outfile = GLOBALS.PEDOCLIM_STATS_PATH
     print(f'Writing {outfile}')
-    pedoclimatic_data.to_csv(outfile)
+    pedoclimatic_data.to_csv(outfile, float_format='{:.3f}'.format)
 
     return pedoclimatic_data
 

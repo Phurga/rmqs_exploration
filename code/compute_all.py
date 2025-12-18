@@ -12,7 +12,13 @@ from compute_cf import compute_land_use_cf_median_context
 def compute_all() -> GeoDataFrame:
     """ Either loads data from csv file or updates it from raw files."""
     #initial read of the RMQS sample database
-    data = pd.read_csv(GLOBALS.RMQS_LANDUSE_PATH, index_col='id_site', encoding=GLOBALS.ENCODING_RMQS, na_values=['ND'])
+    data = pd.read_csv(
+        GLOBALS.RMQS_LANDUSE_PATH,
+        usecols=["id_site", "site_officiel", "x_theo", "y_theo", "signific_ger_95", "desc_code_occupation1", "desc_code_occupation3"],
+        index_col='id_site',
+        encoding=GLOBALS.ENCODING_RMQS, 
+        na_values=['ND'],
+        )
     data = data[data['site_officiel']]
     data = utilities.rename_land_use(data)
     data = get_rmqs_gdf_from_df(data) # transforms the dataframe into a geodataframe (ie adds a geometry column and some attributes)

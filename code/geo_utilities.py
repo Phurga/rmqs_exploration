@@ -58,10 +58,12 @@ def get_rmqs_gdf_from_df(data: pd.DataFrame) -> gpd.GeoDataFrame:
     """
     Generate a gpd.DataFrame from a pd.DataFrame containing x and y coordinates
     default settings are adapted to RMQS, whose CRS is RGF93 (EPSG:2154)."""
-    return gpd.GeoDataFrame(
+    gdf = gpd.GeoDataFrame(
         data, 
         geometry=gpd.points_from_xy(data['x_theo'], data['y_theo']), 
         crs=GLOBALS.CRS_RMQS)
+    gdf.drop(["x_theo", "y_theo"], axis=1, inplace=True)
+    return gdf
 
 def sample_raster_to_geodataframe(geodf: gpd.GeoDataFrame,
                                   raster: rio.DatasetReader,

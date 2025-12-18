@@ -104,5 +104,6 @@ def load_rmqs_data() -> gpd.GeoDataFrame:
     """
     data_file = GLOBALS.RMQS_FINAL_GEO_PATH
     print(f"Reading {data_file}")
-    data =  gpd.read_file(data_file, index='id_site')
+    data =  gpd.read_file(data_file)
+    data.set_index('id_site', inplace=True)
     return data

@@ -1,11 +1,8 @@
-import warnings
 from pathlib import Path
 import pandas as pd
 import geopandas as gpd
 
 import GLOBALS
-# globally silence FutureWarning messages
-#warnings.filterwarnings("ignore", category=FutureWarning)
 
 def read_otu_table():
     return pd.read_csv(
@@ -35,8 +32,8 @@ def compute_mean_level_abundance(otu_table: pd.DataFrame, taxonomy: pd.DataFrame
     """
     Aggregate OTU abundances to a taxonomic level.
 
-    - otu_table: array, samples x OTU_IDs, values: sequence count
-    - taxonomy: array, OTU_IDs x taxonomic level (level in KINGDOM, PHYLUM, CLASS, ORDER, FAMILY, GENUS), values: taxa name
+    - otu_table: array (samples, OTU_IDs): sequence count
+    - taxonomy: array (OTU_IDs, taxonomic level): taxa name (level in KINGDOM, PHYLUM, CLASS, ORDER, FAMILY, GENUS)
     - level: str, taxonomic column to aggregate by.
 
     Returns a DataFrame samples x taxa, values: mean taxa abundance.
@@ -78,15 +75,16 @@ def compute_otu_metrics(data: gpd.GeoDataFrame):
     otu_table = read_otu_table()
     otu_richness = compute_otu_richness(otu_table)
     otu_abundance = compute_total_otu_abundance(otu_table)
-    level = "ORDER"
+    level = 'ORDER'
     mean_level_abundance = compute_mean_level_abundance(otu_table, read_taxonomy(), level=level)
     otu_metrics = pd.concat([otu_richness, otu_abundance, mean_level_abundance], axis=1)
     
     # Writing and returning
     print(f"Writing {GLOBALS.RMQS_OTU_STATS}")
     otu_metrics.to_csv(GLOBALS.RMQS_OTU_STATS, index=True)
-    data = data.merge(otu_metrics, left_index=True, right_index=True, how="left")
+    data = data.merge(otu_metrics, how='left', right_index=True, left_index=True)
     return data
 
 if __name__ == "__main__":
-    compute_otu_metrics()
+    data = pd.DataFrame()
+    compute_otu_metrics(data)
