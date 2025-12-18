@@ -27,6 +27,8 @@ WRB_LVL1_NAMES_PATH = PROJECT_ROOT / r"data_sm\ESDB-Raster-Library-1k-GeoTIFF-20
 # results
 OUT_DIR = PROJECT_ROOT / "results"
 
+PEDOCLIM_STATS_PATH = OUT_DIR / 'france_pedoclim_stats.csv'
+BIOREGION_FRANCE_PATH = OUT_DIR / "shapefile" / "bioregion_france.gpkg"
 CORINE_FRANCE_PATH = OUT_DIR / "rasters" /"CORINE_france.tif"
 WRB_LV1_FRANCE_PATH = OUT_DIR / "rasters" / "WRB_LV1_france.tif"
 RMQS_OTU_STATS = OUT_DIR / "otu_metrics.csv"

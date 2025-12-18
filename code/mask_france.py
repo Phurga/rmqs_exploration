@@ -35,11 +35,26 @@ def write_raster(image: np.ndarray, meta: dict, outfile: Path):
         dest.write(image)
     return None
 
-
-if __name__ == '__main__':
-    #perform for wrb on france
+def write_wrb_france():
+    """
+    Writes a raster for WRBLV1 masked to france borders (smaller)
+    """
     image, meta = mask_raster_to_vector(
         raster_path = GLOBALS.WRB_LVL1_PATH,
         vector_path = GLOBALS.FRANCE_BORDERS_PATH
     )
     write_raster(image, meta, GLOBALS.WRB_LV1_FRANCE_PATH)
+    return None
+
+def write_bioregion_france():
+    france = gpd.read_file(GLOBALS.FRANCE_BORDERS_PATH)
+    bioregions = gpd.read_file(GLOBALS.EEA_BIOREGION_BORDERS_PATH)
+    france.to_crs(bioregions.crs, inplace=True)
+    bioregions_france =  bioregions.clip(france)
+    print(f"Writing {GLOBALS.BIOREGION_FRANCE_PATH}")
+    bioregions_france.to_file(GLOBALS.BIOREGION_FRANCE_PATH)
+    return None
+
+
+if __name__ == '__main__':
+    write_bioregion_france()
