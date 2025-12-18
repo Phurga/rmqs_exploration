@@ -45,15 +45,27 @@ def rename_land_use(data: gpd.GeoDataFrame):
     return data
 
 def relabel_bottom(series: pd.Series, 
-                   approach = "quantile", 
+                   approach: str = "quantile", 
                    param = 0.8, 
                    bottom_label = "Others"
                    ) -> pd.Series:
     """
-    Relabel some values of a pd.Series to "bottom_label" if they are considered rare considering the approach chosen.
-    - 'top_cats' keeps only the "top_n" most populous values based on value counts
-    - 'quantile' keeps only categories below a "cutoff_quantile" (default to 0.8)
-    - 'min_val_count' keeps only values appearing more than val_count times in the pd.Series.
+    Relabel rare values of a series to a grouping label 
+    following a given grouping approach.
+    Returns the modified series.
+    
+    
+    :param series: Series that will be modified
+    :type series: pd.Series
+    :param approach: Choice of the approach used to classify rare values among top_cats, quantile, min_val_count
+     - 'top_cats' keeps only the "top_n" most populous values based on value counts
+     - 'quantile' keeps only categories below a "cutoff_quantile" (default to 0.8)
+     - 'min_val_count' keeps only values appearing more than val_count times in the pd.Series.
+    :type approach str
+    :param param: value of the parameter used in the grouping approach
+    :param bottom_label: Name of the new value for rare values
+    :return: Modified input series
+    :rtype: Series[Any]
     """
     match approach:
         case "top_cats":
