@@ -30,6 +30,12 @@ kwargs_heatmap = {
     'center':1
     }
 
+kwargs_legend = {
+    'ncol': 2,
+    'bbox_to_anchor': (0.5, 0),
+    'loc': 'upper center'
+}
+
 def trim_floats(val):
     if type(val) is float:
         return f"{val:.2f}"
@@ -42,10 +48,10 @@ def add_count_to_series(series : pd.Series, counts: pd.Series) -> pd.Series:
         return f"\n(n: {int(val)})"
     return series + counts.map(format_counts, na_action="ignore")
 
-def plot_median_rel_rich_pedoclim_croplands(data_rmqs: gpd.GeoDataFrame):
-    data_rmqs = data_rmqs[data_rmqs["land_use"] == "annual crops"]
+def heatmap_pedoclim_croplands(data: gpd.GeoDataFrame):
+    data = data[data["land_use"] == "annual crops"]
     
-    medians = data_rmqs.pivot_table(
+    medians = data.pivot_table(
         values="relative_otu_richness",
         index="bioregion",
         columns="WRB_LVL1",
@@ -53,7 +59,7 @@ def plot_median_rel_rich_pedoclim_croplands(data_rmqs: gpd.GeoDataFrame):
         margins=True
         )
 
-    counts = data_rmqs.pivot_table(
+    counts = data.pivot_table(
         values="relative_otu_richness",
         index="bioregion",
         columns="WRB_LVL1",
@@ -76,22 +82,29 @@ def plot_median_rel_rich_pedoclim_croplands(data_rmqs: gpd.GeoDataFrame):
     ax.set_xlabel("soil class (WRB LEVEL 1)")
     ax.set_ylabel("climate (EEA bioregions)")
     ax.set_title("Median relative OTU richness by pedoclimatic region, for annual cropland")
-    utilities.save_fig(fig, "LCAFOOD", "median_rel_rich_pedoclim_croplands")
+    filetitle = '_'.join([
+        "heatmap_of",
+        "relative_otu_richness",
+        "vars",
+        "bioregion",
+        "WRB_LVL1"
+    ])
+    utilities.save_fig(fig,"LCAFOOD",filetitle)
     return fig
 
-def plot_median_rel_rich_pedoclim_vs_lu(data_rmqs: gpd.GeoDataFrame):
-    data_rmqs['context'] = utilities.relabel_bottom(data_rmqs['context'], approach='top_cats', param=10)
+def heatmap_pedoclim_vs_lu(data: gpd.GeoDataFrame):
+    data['context'] = utilities.relabel_bottom(data['context'], approach='top_cats', param=10)
     index = ['context']
     values="relative_otu_richness"
     columns="land_use"
-    medians = data_rmqs.pivot_table(
+    medians = data.pivot_table(
         values=values,
         index=index,
         columns=columns,
         aggfunc="median",
         margins=True)
 
-    counts = data_rmqs.pivot_table(
+    counts = data.pivot_table(
         values=values,
         index=index,
         columns=columns,
@@ -113,34 +126,78 @@ def plot_median_rel_rich_pedoclim_vs_lu(data_rmqs: gpd.GeoDataFrame):
     ax.set_xlabel("land use class")
     ax.set_ylabel("pedoclimatic class")
     ax.set_title("Median relative bacterial richness by pedoclimatic region and land use class")
-    utilities.save_fig(fig, "LCAFOOD", "median_rel_rich_pedoclim_vs_landuse")
+    filetitle = '_'.join([
+        "heatmap_of",
+        values,
+        "vars",
+        *index,
+        columns
+    ])
+    utilities.save_fig(fig,"LCAFOOD",filetitle)
     return fig
 
-def catplot_context_vs_landuse(data_rmqs: gpd.GeoDataFrame):
-    data_rmqs['context'] = utilities.relabel_bottom(data_rmqs['context'], approach='top_cats', param=10)
-    index = ['context', 'land_use']
+def stripplot_context_vs_landuse(data: gpd.GeoDataFrame):
+    data['context'] = utilities.relabel_bottom(data['context'], approach='top_cats', param=10)
+    index = ['context', "land_use"]
     values="relative_otu_richness"
-    columns="land_use"
 
-    medians = data_rmqs.pivot_table(
+    medians = data.pivot_table(
         values=values,
         index=index,
-        aggfunc="median",
-        margins=True)
+        aggfunc="median")
     
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots()
+    ax.axvline(1, color='k', ls='dotted')
     sns.stripplot(
         data=medians,
-        x="context",
-        y="relative_otu_richness",
-        hue="land_use",
+        x=values,
+        y=index[0],
+        hue=index[1],
         ax=ax)
     
-    ax.tick_params(axis='x', labelrotation=90)
-    
-    utilities.save_fig(fig,"results/LCAFOOD/","catplot")
+    identifier = [
+        "median",
+        "of",
+        values,
+        "vs",
+        *index
+    ]
+    ax.xaxis.set_tick_params(bottom=False, top=True, labelbottom=False, labeltop=True)
+    ax.xaxis.set_label_text(None)
+    sns.move_legend(ax, **kwargs_legend)
+    ax.set_title(' '.join(identifier), wrap=True)
+    utilities.save_fig(fig, "LCAFOOD", '_'.join(identifier))
     return None
 
-#plot_median_rel_rich_pedoclim_croplands(data_rmqs)
-#plot_median_rel_rich_pedoclim_vs_lu(data_rmqs)
-catplot_context_vs_landuse(data_rmqs)
+def boxplot_context_vs_landuse(data: gpd.GeoDataFrame):
+    data['context'] = utilities.relabel_bottom(data['context'], approach='top_cats', param=10)
+    data = data[data['land_use'].isin(["natural sites", "urban sites"]) == False]
+    x = "relative_otu_richness"
+    y = 'context'
+    hue = "land_use"
+    
+    fig, ax = plt.subplots(figsize=(6, 8))
+    ax.axvline(1)
+    sns.boxplot(
+        data=data,
+        x=x,
+        y=y,
+        hue=hue,
+        ax=ax)
+    
+    filetitle = '_'.join([
+        "median of",
+        x,
+        "vars",
+        y,
+        hue
+    ])
+    sns.move_legend(ax, **kwargs_legend)
+    ax.set_title(filetitle)
+    utilities.save_fig(fig,"LCAFOOD",filetitle)
+    return None
+
+heatmap_pedoclim_croplands(data_rmqs)
+heatmap_pedoclim_vs_lu(data_rmqs)
+stripplot_context_vs_landuse(data_rmqs)
+boxplot_context_vs_landuse(data_rmqs)
