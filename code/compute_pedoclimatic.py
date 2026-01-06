@@ -1,51 +1,71 @@
-import GLOBALS
 import json
-import geopandas as gpd
-import rasterstats
-import pandas as pd
 from pathlib import Path
-        
-def compute_pedoclimatic_mix_france() -> pd.DataFrame:
+
+import geopandas as gpd
+import pandas as pd
+import rasterstats
+
+import GLOBALS
+
+
+def compute_pedoclimatic_mix_france(
+    bioregion_path: Path = GLOBALS.BIOREGION_FRANCE_PATH,
+    wrb_raster_path: Path = GLOBALS.WRB_LV1_FRANCE_PATH,
+    wrb_mapping_path: Path = GLOBALS.WRB_FINAL_MAPPING_PATH,
+) -> pd.DataFrame:
     """
-    Get the mix of pedoclimatic in France from a climatic region vector map and a soil class raster map
+    Compute the national soil-class composition across French climate zones.
+
+    Returns a DataFrame indexed by (climate, soil_class) with:
+      - pixel_count
+      - relative_pixel_count (national share; sums to 1 across all rows)
+      - cumulative_area_pct (cumulative national share after sorting desc)
     """
-    # prepare bioregion vector file into a geodataframe containing only climate zone name and its geometries
-    bioregions_france = gpd.read_file(GLOBALS.BIOREGION_FRANCE_PATH).set_index(keys='code')
-    bioregions_france = bioregions_france["geometry"]
-    
-    # prepare soil class raster file
-    with open(GLOBALS.WRB_FINAL_MAPPING_PATH) as file:
-        mapping = json.load(file)
-        mapping = {int(key): mapping[key] for key in mapping}
-    
-    # compute zonal stastics, here a zonal histogram
-    # stats returns a list of geojson, one element corresponds to one climate zone
-    # one element contains a properties item containing the histogram of soil classes
+    # get climate zones (index = climate code)
+    bioregions_france = gpd.read_file(bioregion_path).set_index("code")["geometry"]
+
+    # soil-class mapping for raster categories
+    with open(wrb_mapping_path, "r", encoding="utf-8") as file:
+        mapping_raw = json.load(file)
+    mapping = {int(k): v for k, v in mapping_raw.items()}
+
+    # compute zonal statistics to get the pixel count for each climate zone and each soil class
     stats = rasterstats.zonal_stats(
         vectors=bioregions_france,
-        raster=GLOBALS.WRB_LV1_FRANCE_PATH,
+        raster=wrb_raster_path,
         categorical=True,
         category_map=mapping,
-        geojson_out=True)
-    
-    # convert the stats geojsons into tabular data with index being climate and soil_class, i.e. the pedoclimatic region 
-    pedoclimatic_data = []
-    for climate_mix in stats:
-        climate = climate_mix['id']
-        for soil_class, pixelcount in climate_mix['properties'].items():
-            pedoclimatic_data.append([climate, soil_class, pixelcount])
-    pedoclimatic_data = pd.DataFrame(pedoclimatic_data, columns=['climate', 'soil_class', 'pixel_count']).set_index(['climate', 'soil_class'])
-    pedoclimatic_data['relative_pixel_count'] = pedoclimatic_data['pixel_count'] / pedoclimatic_data['pixel_count'].sum()
-    pedoclimatic_data.sort_values(by='relative_pixel_count', ascending=False, inplace=True)
-    pedoclimatic_data["cumulative_area_pct"] = pedoclimatic_data['relative_pixel_count'].cumsum()
+        geojson_out=True,
+    )
 
-    # write in disk
-    outfile = GLOBALS.PEDOCLIM_STATS_PATH
-    print(f'Writing {outfile}')
-    pedoclimatic_data.to_csv(outfile, float_format='{:.3f}'.format)
+    # transform the stats output (complex format) into a dataframe
+    rows: list[tuple[str, str, int]] = []
+    for climate in stats:
+        climate: str = climate["id"]
+        props: dict = climate["properties"]
+
+        # Keep only histogram entries (counts). This avoids pulling non-count attributes into the table.
+        for soil_class, pixelcount in props.items():
+            if isinstance(pixelcount, (int, float)):
+                rows.append((climate, soil_class, int(pixelcount)))
+
+    pedoclimatic_data = (
+        pd.DataFrame(rows, columns=["climate", "soil_class", "pixel_count"])
+        .set_index(["climate", "soil_class"])
+    )
+
+    # compute relative values, relative pixel count is used to proxy relative surface coverage
+    pedoclimatic_data["relative_pixel_count"] = pedoclimatic_data["pixel_count"].transform(lambda x: x/x.sum())
+    pedoclimatic_data.sort_values(by="relative_pixel_count", ascending=False, inplace=True)
+    pedoclimatic_data["cumulative_area_pct"] = pedoclimatic_data["relative_pixel_count"].cumsum()
 
     return pedoclimatic_data
 
+
 if __name__ == "__main__":
-    compute_pedoclimatic_mix_france()
-    
+    pedoclimatic_mix_df = compute_pedoclimatic_mix_france()
+
+    # Write to disk
+    outfile: Path = GLOBALS.PEDOCLIM_STATS_PATH
+    print(f"Writing {outfile}")
+    pedoclimatic_mix_df.to_csv(outfile, float_format="{:.3f}".format)
